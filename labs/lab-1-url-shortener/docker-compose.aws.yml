@@ -1,0 +1,59 @@
+# The AWS-shaped option: the same system, with DynamoDB for the links and SQS for the click
+# events, both served by LocalStack on your laptop. No AWS account, nothing to pay.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.aws.yml up --build
+#
+# Only two settings change (STORE and QUEUE). The API, the worker, the cache and the gateway
+# are the exact same containers. Postgres is switched off. Redis stays: it is still the cache,
+# and in AWS it would be ElastiCache, which LocalStack's free tier does not emulate.
+#
+# To point at real AWS instead, drop the localstack service and AWS_ENDPOINT_URL, and give the
+# containers real credentials or an IAM role.
+
+x-aws-env: &aws-env
+  STORE: dynamodb
+  QUEUE: sqs
+  AWS_ENDPOINT_URL: http://localstack:4566
+  AWS_REGION: us-east-1
+  AWS_ACCESS_KEY_ID: test
+  AWS_SECRET_ACCESS_KEY: test
+  DYNAMO_TABLE: links
+  SQS_QUEUE: clicks
+
+services:
+  localstack:
+    image: localstack/localstack:3.8
+    restart: unless-stopped
+    environment:
+      SERVICES: dynamodb,sqs
+    ports:
+      - "127.0.0.1:${LOCALSTACK_PORT:-4566}:4566"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:4566/_localstack/init/ready | grep -q '\"completed\": true'"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+
+  postgres:
+    profiles: !override ["local-only"]
+
+  api1:
+    environment: {<<: *aws-env, REPLICA_NAME: api-1}
+    depends_on: !override
+      localstack: {condition: service_healthy}
+      redis: {condition: service_healthy}
+  api2:
+    environment: {<<: *aws-env, REPLICA_NAME: api-2}
+    depends_on: !override
+      localstack: {condition: service_healthy}
+      redis: {condition: service_healthy}
+  api3:
+    environment: {<<: *aws-env, REPLICA_NAME: api-3}
+    depends_on: !override
+      localstack: {condition: service_healthy}
+      redis: {condition: service_healthy}
+  worker:
+    environment: {<<: *aws-env, REPLICA_NAME: worker-1}
+    depends_on: !override
+      localstack: {condition: service_healthy}
+      redis: {condition: service_healthy}
