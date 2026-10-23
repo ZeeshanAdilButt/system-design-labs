@@ -17,6 +17,7 @@ aws = ["boto3>=1.35"]
 
 [project.scripts]
 shortener-worker = "shortener.worker:main"
+shortener-seed = "shortener.seed:main"
 
 [build-system]
 requires = ["hatchling"]
