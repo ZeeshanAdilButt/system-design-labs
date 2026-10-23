@@ -54,7 +54,7 @@ Stop it with `docker compose down`. Add `-v` to forget the data too. If a port i
 
 | Piece | Its one job | Code |
 |---|---|---|
-| **gateway** | One front door. Serves the page, sends API calls and short links to a replica, and tries another replica if one does not answer. | [nginx.conf](system/gateway/nginx.conf#L6-L14), [retry rules](system/gateway/proxy_common.conf#L11-L12) |
+| **gateway** | One front door. Serves the page, sends API calls and short links to a replica, and tries another replica if one does not answer. | [nginx.conf](system/gateway/nginx.conf#L6-L18), [retry rules](system/gateway/proxy_common.conf#L11-L12) |
 | **api-1, api-2, api-3** | Make links and answer redirects. Identical and stateless, so you can lose one or add another. | [api.py](system/shortener/src/shortener/api.py#L73) |
 | **redis, as a cache** | Remember `code -> long URL` so most redirects never touch the database. | [cache.py](system/shortener/src/shortener/cache.py#L28) |
 | **redis, as a queue** | Hold click events until the worker counts them. | [queue_redis.py](system/shortener/src/shortener/queue_redis.py#L15) |

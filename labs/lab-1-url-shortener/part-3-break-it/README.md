@@ -108,7 +108,7 @@ While Postgres was stopped, things that *need* the database:
 
 - **A replica is free to lose.** Nothing failed and the typical wait moved from 4.4 to 5.3 ms,
   within the noise of this laptop. The gateway skips a replica that refuses a connection and
-  retries the call on another ([nginx.conf](../system/gateway/nginx.conf#L6-L14),
+  retries the call on another ([nginx.conf](../system/gateway/nginx.conf#L6-L18),
   [proxy_common.conf](../system/gateway/proxy_common.conf#L11-L12)), and replicas hold no
   state, so any of them can answer any request. Healthy again 1.5 seconds after starting it.
 - **Redis is optional for correctness and very much not for free.** With it gone, 94% of
