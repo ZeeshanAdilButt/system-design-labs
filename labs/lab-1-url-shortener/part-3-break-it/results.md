@@ -7,52 +7,48 @@ Each thing was stopped for 8 seconds and then started again.
 
 | what broke | redirects sent | failed | served from cache | p50 | p99 |
 |---|---|---|---|---|---|
-| nothing broken | 3,907 | 0 | 100% | 4.4 ms | 26.1 ms |
-| one API replica stopped | 4,095 | 0 | 100% | 5.3 ms | 15.3 ms |
-| Redis stopped (no cache, no queue) | 3,737 | 2 | 6% | 4.9 ms | 19.4 ms |
-| worker stopped (clicks not counted) | 4,277 | 0 | 100% | 4.0 ms | 7.8 ms |
-| Postgres stopped (the database) | 5,224 | 0 | 100% | 4.2 ms | 8.9 ms |
+| nothing broken | 4,184 | 0 | 100% | 3.9 ms | 8.7 ms |
+| one API replica stopped | 4,344 | 0 | 100% | 3.9 ms | 7.5 ms |
+| two API replicas stopped | 4,330 | 0 | 100% | 6.3 ms | 19.6 ms |
+| Redis stopped (no cache, no queue) | 3,592 | 0 | 15% | 3.2 ms | 252.7 ms |
+| worker stopped (clicks not counted) | 4,288 | 0 | 100% | 2.8 ms | 7.0 ms |
+| Postgres stopped (the database) | 5,152 | 0 | 100% | 3.2 ms | 6.2 ms |
 
 ## What it cost behind the scenes
 
 | what broke | clicks sent | clicks counted | seconds until all healthy |
 |---|---|---|---|
-| nothing broken | 6,414 | 6,414 | 1.3 |
-| one API replica stopped | 6,774 | 6,774 | 1.5 |
-| Redis stopped (no cache, no queue) | 6,651 | 2,953 | 1.7 |
-| worker stopped (clicks not counted) | 7,344 | 7,344 | 1.3 |
-| Postgres stopped (the database) | 9,028 | 9,028 | 2.9 |
+| nothing broken | 6,688 | 6,688 | 1.3 |
+| one API replica stopped | 7,499 | 7,499 | 1.3 |
+| two API replicas stopped | 8,275 | 8,275 | 1.4 |
+| Redis stopped (no cache, no queue) | 7,055 | 4,106 | 2.9 |
+| worker stopped (clicks not counted) | 7,377 | 7,377 | 1.3 |
+| Postgres stopped (the database) | 9,344 | 9,345 | 3.9 |
 
 ## Click backlog while the worker was stopped
 
 | seconds since it stopped | clicks waiting to be counted |
 |---|---|
-| 0.7 | 199 |
-| 1.2 | 463 |
-| 1.8 | 727 |
-| 2.3 | 987 |
-| 2.8 | 1,257 |
-| 3.3 | 1,517 |
-| 3.8 | 1,781 |
-| 4.3 | 2,013 |
-| 4.8 | 2,244 |
-| 5.3 | 2,516 |
-| 5.8 | 2,780 |
-| 6.3 | 3,048 |
-| 6.8 | 3,312 |
-| 7.4 | 3,576 |
-| 7.9 | 3,844 |
-| 8.4 | 3,844 |
-| 12.4 | 0 |
-
-## The requests that failed
-
-| what broke | what the failed requests got |
-|---|---|
-| Redis stopped (no cache, no queue) | 2 x 503 |
+| 0.6 | 176 |
+| 1.1 | 432 |
+| 1.6 | 696 |
+| 2.2 | 960 |
+| 2.7 | 1,224 |
+| 3.2 | 1,488 |
+| 3.7 | 1,753 |
+| 4.2 | 2,016 |
+| 4.7 | 2,280 |
+| 5.2 | 2,545 |
+| 5.7 | 2,809 |
+| 6.2 | 3,072 |
+| 6.8 | 3,336 |
+| 7.3 | 3,606 |
+| 7.8 | 3,865 |
+| 8.3 | 3,865 |
+| 12.2 | 0 |
 
 ## Things that need the database, while Postgres stopped
 
-- uncached link: 503 in 2006 ms; create: 503 in 2008 ms
 - uncached link: 503 in 2005 ms; create: 503 in 2006 ms
+- uncached link: 503 in 2004 ms; create: 503 in 2004 ms
 

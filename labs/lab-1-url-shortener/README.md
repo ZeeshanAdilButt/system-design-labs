@@ -17,7 +17,8 @@ You need Docker. From this folder:
 docker compose up -d --build
 ```
 
-The first build takes a minute or two. Then open <http://localhost:8080>.
+The first build takes a minute or two. A `seed` container then adds a dozen named links and
+about 180 clicks, so the page is not empty. Open <http://localhost:8080>.
 
 | What | Where |
 |---|---|
@@ -26,7 +27,8 @@ The first build takes a minute or two. Then open <http://localhost:8080>.
 | Postgres, if you want to look inside | `postgresql://shortener:shortener@127.0.0.1:5451/shortener` |
 | Redis | `127.0.0.1:6391` |
 
-Stop it with `docker compose down`. Add `-v` to forget the data too. If a port is taken, set
+Stop it with `docker compose down`. Add `-v` to forget the data too (the next `up` seeds again).
+Run the seed by hand any time with `docker compose run --rm seed`. If a port is taken, set
 `GATEWAY_PORT`, `PG_PORT` or `REDIS_PORT` before `docker compose up`.
 
 ## The architecture
@@ -54,7 +56,7 @@ Stop it with `docker compose down`. Add `-v` to forget the data too. If a port i
 
 | Piece | Its one job | Code |
 |---|---|---|
-| **gateway** | One front door. Serves the page, sends API calls and short links to a replica, and tries another replica if one does not answer. | [nginx.conf](system/gateway/nginx.conf#L6-L18), [retry rules](system/gateway/proxy_common.conf#L11-L12) |
+| **gateway** | One front door. Serves the page, sends API calls and short links to a replica, and tries another replica if one does not answer. | [nginx.conf](system/gateway/nginx.conf#L6-L14), [retry rules](system/gateway/proxy_common.conf#L11-L12) |
 | **api-1, api-2, api-3** | Make links and answer redirects. Identical and stateless, so you can lose one or add another. | [api.py](system/shortener/src/shortener/api.py#L73) |
 | **redis, as a cache** | Remember `code -> long URL` so most redirects never touch the database. | [cache.py](system/shortener/src/shortener/cache.py#L28) |
 | **redis, as a queue** | Hold click events until the worker counts them. | [queue_redis.py](system/shortener/src/shortener/queue_redis.py#L15) |
@@ -132,7 +134,7 @@ back to the code that made it.
 | Clicks go on a queue, counted after the redirect | The redirect never waits on a database write | A click is counted a moment later, and lost if Redis is down at that moment | [api.py](system/shortener/src/shortener/api.py#L228) |
 | The worker acknowledges after writing | A click is never lost to a worker crash | A click can be counted twice if the worker dies between the write and the acknowledgement | [worker.py](system/shortener/src/shortener/worker.py#L40) |
 | The gateway retries on another replica, but not on a `503` | A dead replica is invisible to users | A `503` from the app means "the database is down", which another replica cannot fix | [proxy_common.conf](system/gateway/proxy_common.conf#L6-L12) |
-| The gateway looks replica addresses up again every 3 s | A replica that is recreated gets a new address. nginx otherwise remembers the old one for ever and the replica never receives traffic again | A recreated replica can take up to about half a minute to rejoin (seen once: nginx kept sending a few requests to the dead address first) | [nginx.conf](system/gateway/nginx.conf#L6-L18) |
+| Each replica has a fixed address, and a dead one is skipped after a quarter second | nginx looks a name up once and remembers the address, so a replica that came back somewhere new would get no traffic. A stopped container never answers at all, so waiting for it is slow | Fixed addresses are a Docker detail you would not hand-pick on a real platform, where a service registry does this job | [docker-compose.yml](docker-compose.yml#L119-L126), [proxy_common.conf](system/gateway/proxy_common.conf#L9-L12) |
 
 ## Poke it
 
@@ -147,11 +149,11 @@ The page at <http://localhost:8080> is built to be played with:
    and the status pill at the top:
 
    ```bash
-   docker compose stop api2        # one replica fewer: nothing changes for users
+   docker compose stop api1 api2   # two replicas fewer: nothing changes for users
    docker compose stop redis       # no cache, no queue: still redirects, a bit slower
    docker compose stop worker      # clicks pile up in the queue, links still work
    docker compose stop postgres    # cached links still redirect, new links cannot be made
-   docker compose start api2 redis worker postgres
+   docker compose start api1 api2 redis worker postgres
    ```
 
 ## Run it on AWS services (locally)

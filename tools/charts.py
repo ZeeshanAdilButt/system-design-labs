@@ -253,7 +253,8 @@ def part_3() -> None:
     rows = table(md, "What it cost behind the scenes")
     short = {
         "nothing broken": "nothing",
-        "one API replica stopped": "replica",
+        "one API replica stopped": "1 replica",
+        "two API replicas stopped": "2 replicas",
         "Redis stopped": "Redis",
         "worker stopped": "worker",
         "Postgres stopped": "Postgres",

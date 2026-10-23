@@ -12,19 +12,22 @@
 <text x="56" y="119.0" font-size="11" fill="#888780" text-anchor="end">75%</text>
 <line x1="64" x2="660" y1="64.0" y2="64.0" stroke="#88878055" stroke-width="1"/>
 <text x="56" y="68.0" font-size="11" fill="#888780" text-anchor="end">100%</text>
-<rect x="96.6" y="64.0" width="51.0" height="204.0" rx="3" fill="#2f9e6e"><title>nothing: 100%</title></rect>
-<text x="122.1" y="59.0" font-size="11" fill="#888780" text-anchor="middle">100%</text>
-<text x="123.6" y="286" font-size="11.5" fill="#888780" text-anchor="middle">nothing</text>
-<rect x="215.8" y="64.0" width="51.0" height="204.0" rx="3" fill="#2f9e6e"><title>replica: 100%</title></rect>
-<text x="241.3" y="59.0" font-size="11" fill="#888780" text-anchor="middle">100%</text>
-<text x="242.8" y="286" font-size="11.5" fill="#888780" text-anchor="middle">replica</text>
-<rect x="335.0" y="177.4" width="51.0" height="90.6" rx="3" fill="#2f9e6e"><title>Redis: 44.4%</title></rect>
-<text x="360.5" y="172.4" font-size="11" fill="#888780" text-anchor="middle">44.4%</text>
-<text x="362.0" y="286" font-size="11.5" fill="#888780" text-anchor="middle">Redis</text>
-<rect x="454.2" y="64.0" width="51.0" height="204.0" rx="3" fill="#2f9e6e"><title>worker: 100%</title></rect>
-<text x="479.7" y="59.0" font-size="11" fill="#888780" text-anchor="middle">100%</text>
-<text x="481.2" y="286" font-size="11.5" fill="#888780" text-anchor="middle">worker</text>
-<rect x="573.4" y="64.0" width="51.0" height="204.0" rx="3" fill="#2f9e6e"><title>Postgres: 100%</title></rect>
-<text x="598.9" y="59.0" font-size="11" fill="#888780" text-anchor="middle">100%</text>
-<text x="600.4" y="286" font-size="11.5" fill="#888780" text-anchor="middle">Postgres</text>
+<rect x="86.7" y="64.0" width="51.0" height="204.0" rx="3" fill="#2f9e6e"><title>nothing: 100%</title></rect>
+<text x="112.2" y="59.0" font-size="11" fill="#888780" text-anchor="middle">100%</text>
+<text x="113.7" y="286" font-size="11.5" fill="#888780" text-anchor="middle">nothing</text>
+<rect x="186.0" y="64.0" width="51.0" height="204.0" rx="3" fill="#2f9e6e"><title>1 replica: 100%</title></rect>
+<text x="211.5" y="59.0" font-size="11" fill="#888780" text-anchor="middle">100%</text>
+<text x="213.0" y="286" font-size="11.5" fill="#888780" text-anchor="middle">1 replica</text>
+<rect x="285.3" y="64.0" width="51.0" height="204.0" rx="3" fill="#2f9e6e"><title>2 replicas: 100%</title></rect>
+<text x="310.8" y="59.0" font-size="11" fill="#888780" text-anchor="middle">100%</text>
+<text x="312.3" y="286" font-size="11.5" fill="#888780" text-anchor="middle">2 replicas</text>
+<rect x="384.7" y="149.3" width="51.0" height="118.7" rx="3" fill="#2f9e6e"><title>Redis: 58.2%</title></rect>
+<text x="410.2" y="144.3" font-size="11" fill="#888780" text-anchor="middle">58.2%</text>
+<text x="411.7" y="286" font-size="11.5" fill="#888780" text-anchor="middle">Redis</text>
+<rect x="484.0" y="64.0" width="51.0" height="204.0" rx="3" fill="#2f9e6e"><title>worker: 100%</title></rect>
+<text x="509.5" y="59.0" font-size="11" fill="#888780" text-anchor="middle">100%</text>
+<text x="511.0" y="286" font-size="11.5" fill="#888780" text-anchor="middle">worker</text>
+<rect x="583.3" y="64.0" width="51.0" height="204.0" rx="3" fill="#2f9e6e"><title>Postgres: 100%</title></rect>
+<text x="608.8" y="59.0" font-size="11" fill="#888780" text-anchor="middle">100%</text>
+<text x="610.3" y="286" font-size="11.5" fill="#888780" text-anchor="middle">Postgres</text>
 </svg>

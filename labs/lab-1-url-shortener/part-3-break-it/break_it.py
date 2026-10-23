@@ -265,6 +265,12 @@ async def run(quick: bool) -> str:
         )
 
         await run_one(
+            "two API replicas stopped",
+            stop=lambda: sh("stop", "api1", "api3"),
+            start=lambda: sh("start", "api1", "api3"),
+        )
+
+        await run_one(
             "Redis stopped (no cache, no queue)",
             stop=lambda: sh("stop", "redis"),
             start=lambda: sh("start", "redis"),
@@ -299,7 +305,7 @@ async def run(quick: bool) -> str:
 
 async def restore() -> None:
     """Start everything this script may have stopped. Starting a running container does nothing."""
-    for service in ("api2", "redis", "worker", "postgres"):
+    for service in ("api1", "api2", "api3", "redis", "worker", "postgres"):
         # Postgres, for one, does not exist in the AWS variant: that is fine.
         with contextlib.suppress(RuntimeError):
             await sh("start", service)

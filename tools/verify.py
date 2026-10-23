@@ -16,6 +16,7 @@ import os
 import subprocess
 import sys
 import time
+import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -50,6 +51,21 @@ class Report:
             mark = "pass" if g.passed else "FAIL"
             lines.append(f"| {g.name} | {mark} | {g.seconds:.0f}s | {g.summary} |")
         return "\n".join(lines)
+
+
+def wait_for_gateway(up: Gate, seconds: float = 120.0) -> Gate:
+    """Poll the stack's health check until the whole system says it is fine."""
+    url = os.environ.get("GATEWAY_URL", "http://127.0.0.1:8080") + "/api/health"
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        try:
+            with urllib.request.urlopen(url, timeout=2) as reply:
+                if b'"ok"' in reply.read():
+                    return up
+        except OSError:
+            pass
+        time.sleep(1)
+    return Gate(up.name, False, up.seconds + seconds, f"{url} never said ok", up.details)
 
 
 def parts() -> list[tuple[str, Path]]:
@@ -102,9 +118,10 @@ def main() -> int:
             continue
         if needs_stack and not stack_up:
             lab = script.parent.parent
-            up = run(
-                "docker compose up", ["docker", "compose", "up", "-d", "--build", "--wait"], lab
-            )
+            # No --wait: it counts the one-shot seed container's clean exit as a failure.
+            up = run("docker compose up", ["docker", "compose", "up", "-d", "--build"], lab)
+            if up.passed:
+                up = wait_for_gateway(up)
             report.gates.append(up)
             if not up.passed:
                 break
