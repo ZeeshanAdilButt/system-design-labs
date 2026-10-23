@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 320" width="680" height="320" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+<title>Share of clicks that were counted, by what was stopped</title>
+<text x="64" y="24" font-size="15" font-weight="600" fill="#888780">Share of clicks that were counted, by what was stopped</text>
+<text x="14" y="166.0" font-size="12" fill="#888780" text-anchor="middle" transform="rotate(-90 14 166.0)">clicks counted</text>
+<line x1="64" x2="660" y1="268.0" y2="268.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="272.0" font-size="11" fill="#888780" text-anchor="end">0%</text>
+<line x1="64" x2="660" y1="217.0" y2="217.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="221.0" font-size="11" fill="#888780" text-anchor="end">25%</text>
+<line x1="64" x2="660" y1="166.0" y2="166.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="170.0" font-size="11" fill="#888780" text-anchor="end">50%</text>
+<line x1="64" x2="660" y1="115.0" y2="115.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="119.0" font-size="11" fill="#888780" text-anchor="end">75%</text>
+<line x1="64" x2="660" y1="64.0" y2="64.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="68.0" font-size="11" fill="#888780" text-anchor="end">100%</text>
+<rect x="96.6" y="64.0" width="51.0" height="204.0" rx="3" fill="#2f9e6e"><title>nothing: 100%</title></rect>
+<text x="122.1" y="59.0" font-size="11" fill="#888780" text-anchor="middle">100%</text>
+<text x="123.6" y="286" font-size="11.5" fill="#888780" text-anchor="middle">nothing</text>
+<rect x="215.8" y="64.0" width="51.0" height="204.0" rx="3" fill="#2f9e6e"><title>replica: 100%</title></rect>
+<text x="241.3" y="59.0" font-size="11" fill="#888780" text-anchor="middle">100%</text>
+<text x="242.8" y="286" font-size="11.5" fill="#888780" text-anchor="middle">replica</text>
+<rect x="335.0" y="177.4" width="51.0" height="90.6" rx="3" fill="#2f9e6e"><title>Redis: 44.4%</title></rect>
+<text x="360.5" y="172.4" font-size="11" fill="#888780" text-anchor="middle">44.4%</text>
+<text x="362.0" y="286" font-size="11.5" fill="#888780" text-anchor="middle">Redis</text>
+<rect x="454.2" y="64.0" width="51.0" height="204.0" rx="3" fill="#2f9e6e"><title>worker: 100%</title></rect>
+<text x="479.7" y="59.0" font-size="11" fill="#888780" text-anchor="middle">100%</text>
+<text x="481.2" y="286" font-size="11.5" fill="#888780" text-anchor="middle">worker</text>
+<rect x="573.4" y="64.0" width="51.0" height="204.0" rx="3" fill="#2f9e6e"><title>Postgres: 100%</title></rect>
+<text x="598.9" y="59.0" font-size="11" fill="#888780" text-anchor="middle">100%</text>
+<text x="600.4" y="286" font-size="11.5" fill="#888780" text-anchor="middle">Postgres</text>
+</svg>

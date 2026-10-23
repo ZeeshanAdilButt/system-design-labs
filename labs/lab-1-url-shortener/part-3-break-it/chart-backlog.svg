@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 320" width="680" height="320" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+<title>Clicks waiting to be counted while the worker is stopped</title>
+<text x="64" y="24" font-size="15" font-weight="600" fill="#888780">Clicks waiting to be counted while the worker is stopped</text>
+<text x="14" y="166.0" font-size="12" fill="#888780" text-anchor="middle" transform="rotate(-90 14 166.0)">clicks waiting</text>
+<line x1="64" x2="660" y1="268.0" y2="268.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="272.0" font-size="11" fill="#888780" text-anchor="end">0</text>
+<line x1="64" x2="660" y1="217.0" y2="217.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="221.0" font-size="11" fill="#888780" text-anchor="end">1,000</text>
+<line x1="64" x2="660" y1="166.0" y2="166.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="170.0" font-size="11" fill="#888780" text-anchor="end">2,000</text>
+<line x1="64" x2="660" y1="115.0" y2="115.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="119.0" font-size="11" fill="#888780" text-anchor="end">3,000</text>
+<line x1="64" x2="660" y1="64.0" y2="64.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="68.0" font-size="11" fill="#888780" text-anchor="end">4,000</text>
+<text x="76.0" y="286" font-size="11" fill="#888780" text-anchor="middle">0.7</text>
+<text x="276.4" y="286" font-size="11" fill="#888780" text-anchor="middle">4.8</text>
+<text x="648.0" y="286" font-size="11" fill="#888780" text-anchor="middle">12.4</text>
+<text x="362.0" y="310" font-size="12" fill="#888780" text-anchor="middle">seconds since the worker stopped</text>
+<polyline points="76.0,257.9 100.4,244.4 129.8,230.9 154.2,217.7 178.7,203.9 203.1,190.6 227.6,177.2 252.0,165.3 276.4,153.6 300.9,139.7 325.3,126.2 349.8,112.6 374.2,99.1 403.6,85.6 428.0,72.0 452.4,72.0 648.0,268.0" fill="none" stroke="#e8743b" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="76.0" cy="257.9" r="3.5" fill="#e8743b"><title>0.7: 199</title></circle>
+<circle cx="100.4" cy="244.4" r="3.5" fill="#e8743b"><title>1.2: 463</title></circle>
+<circle cx="129.8" cy="230.9" r="3.5" fill="#e8743b"><title>1.8: 727</title></circle>
+<circle cx="154.2" cy="217.7" r="3.5" fill="#e8743b"><title>2.3: 987</title></circle>
+<circle cx="178.7" cy="203.9" r="3.5" fill="#e8743b"><title>2.8: 1,257</title></circle>
+<circle cx="203.1" cy="190.6" r="3.5" fill="#e8743b"><title>3.3: 1,517</title></circle>
+<circle cx="227.6" cy="177.2" r="3.5" fill="#e8743b"><title>3.8: 1,781</title></circle>
+<circle cx="252.0" cy="165.3" r="3.5" fill="#e8743b"><title>4.3: 2,013</title></circle>
+<circle cx="276.4" cy="153.6" r="3.5" fill="#e8743b"><title>4.8: 2,244</title></circle>
+<circle cx="300.9" cy="139.7" r="3.5" fill="#e8743b"><title>5.3: 2,516</title></circle>
+<circle cx="325.3" cy="126.2" r="3.5" fill="#e8743b"><title>5.8: 2,780</title></circle>
+<circle cx="349.8" cy="112.6" r="3.5" fill="#e8743b"><title>6.3: 3,048</title></circle>
+<circle cx="374.2" cy="99.1" r="3.5" fill="#e8743b"><title>6.8: 3,312</title></circle>
+<circle cx="403.6" cy="85.6" r="3.5" fill="#e8743b"><title>7.4: 3,576</title></circle>
+<circle cx="428.0" cy="72.0" r="3.5" fill="#e8743b"><title>7.9: 3,844</title></circle>
+<circle cx="452.4" cy="72.0" r="3.5" fill="#e8743b"><title>8.4: 3,844</title></circle>
+<circle cx="648.0" cy="268.0" r="3.5" fill="#e8743b"><title>12.4: 0</title></circle>
+</svg>
