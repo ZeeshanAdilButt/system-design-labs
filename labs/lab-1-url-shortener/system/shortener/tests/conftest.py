@@ -85,8 +85,15 @@ class MemoryQueue:
 
 
 class World:
-    def __init__(self, client: TestClient, store: MemoryStore, queue: MemoryQueue) -> None:
+    def __init__(
+        self,
+        client: TestClient,
+        store: MemoryStore,
+        queue: MemoryQueue,
+        redis: fakeredis.FakeAsyncRedis,
+    ) -> None:
         self.client = client
+        self.redis = redis
         self.store = store
         self.queue = queue
 
@@ -111,4 +118,4 @@ def world(monkeypatch: pytest.MonkeyPatch) -> Iterator[World]:
     monkeypatch.setattr(api_module, "redis_client", lambda settings: redis)
     settings = Settings(public_url="http://short.test", replica="api-test")
     with TestClient(api_module.create_app(settings)) as client:
-        yield World(client, store, queue)
+        yield World(client, store, queue, redis)

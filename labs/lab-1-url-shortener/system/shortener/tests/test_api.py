@@ -1,3 +1,4 @@
+import redis.asyncio as aioredis
 from conftest import World, stored_link
 
 JSON = {"accept": "application/json"}
@@ -119,3 +120,13 @@ def test_stats_count_redirects_and_cache_hits(world: World) -> None:
     assert stats["hit_ratio"] == 1.0
     assert stats["by_replica"] == {"api-test": 4}
     assert stats["click_backlog"] == 4
+
+
+def test_stats_still_answer_when_redis_is_down(world: World) -> None:
+    async def down(key: str) -> dict[str, str]:
+        raise aioredis.ConnectionError("down")
+
+    world.redis.hgetall = down  # type: ignore[method-assign,assignment]
+    res = world.client.get("/api/stats")
+    assert res.status_code == 200
+    assert res.json()["redirects"] == 0

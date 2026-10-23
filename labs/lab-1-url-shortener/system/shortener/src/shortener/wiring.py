@@ -14,13 +14,13 @@ from .queue_redis import RedisQueue
 from .store_postgres import PostgresStore
 
 
-def redis_client(settings: Settings, timeout: float = 0.5) -> aioredis.Redis:
+def redis_client(settings: Settings, timeout: float = 0.25) -> aioredis.Redis:
     # Short timeouts: a slow cache should be given up on quickly (see cache.py).
     return aioredis.from_url(
         settings.redis_url,
         decode_responses=True,
         socket_timeout=timeout,
-        socket_connect_timeout=0.5,
+        socket_connect_timeout=0.25,
     )
 
 

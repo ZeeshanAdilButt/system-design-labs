@@ -29,8 +29,11 @@ class Stats:
             await self._r.hincrby("stats", "created", 1)
 
     async def snapshot(self) -> dict[str, object]:
-        stats = {k: int(v) for k, v in (await self._r.hgetall("stats")).items()}
-        replicas = {k: int(v) for k, v in (await self._r.hgetall("stats:replicas")).items()}
+        try:
+            stats = {k: int(v) for k, v in (await self._r.hgetall("stats")).items()}
+            replicas = {k: int(v) for k, v in (await self._r.hgetall("stats:replicas")).items()}
+        except REDIS_ERRORS:
+            stats, replicas = {}, {}  # the counters live in Redis: while it is down, show none
         hits, misses = stats.get("cache_hit", 0), stats.get("cache_miss", 0)
         lookups = hits + misses
         return {

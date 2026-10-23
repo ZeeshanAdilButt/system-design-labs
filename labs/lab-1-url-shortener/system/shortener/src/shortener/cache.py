@@ -68,7 +68,10 @@ class Cache:
             self._trip()
 
     async def ping(self) -> bool:
+        if not self.available:
+            return False  # known to be down: answer at once instead of waiting on a timeout
         try:
             return bool(await self._r.ping())
         except REDIS_ERRORS:
+            self._trip()
             return False

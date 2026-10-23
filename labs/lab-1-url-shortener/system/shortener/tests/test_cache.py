@@ -54,3 +54,13 @@ async def test_the_breaker_closes_again_after_the_cooldown() -> None:
     await cache.get("a")
     await cache.get("a")
     assert broken.calls == 2
+
+
+async def test_ping_answers_at_once_while_the_breaker_is_open() -> None:
+    broken = BrokenRedis()
+    cache = Cache(broken, ttl=60, negative_ttl=5, cooldown=60)  # type: ignore[arg-type]
+    assert await cache.ping() is False  # this one finds out
+    calls = broken.calls
+    assert await cache.ping() is False  # this one does not even try
+    assert (await cache.get("a")).state == "bypass"
+    assert broken.calls == calls
