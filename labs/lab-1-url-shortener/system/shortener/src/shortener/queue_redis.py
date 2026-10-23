@@ -30,19 +30,28 @@ class RedisQueue:
         await self._r.xadd(STREAM, {"code": code}, maxlen=200_000, approximate=True)
 
     async def consume(self, max_items: int, wait_ms: int) -> ClickBatch:
-        # After a restart, first re-read what this consumer was handed but never acknowledged
-        # (id "0"), then move on to new events (id ">").
-        start = "0" if self._drain_own_pending else ">"
+        try:
+            # After a restart, first re-read what this consumer was handed but never
+            # acknowledged (id "0"), then move on to new events (id ">").
+            if self._drain_own_pending:
+                batch = await self._read("0", max_items, None)
+                if batch.codes:
+                    return batch
+                self._drain_own_pending = False
+            return await self._read(">", max_items, wait_ms)
+        except aioredis.ResponseError as exc:
+            if "NOGROUP" not in str(exc):
+                raise
+            # Redis was restarted without its data: the group is gone. Make it again.
+            await self.setup()
+            self._drain_own_pending = True
+            return ClickBatch(codes=[], receipts=[])
+
+    async def _read(self, start: str, count: int, block: int | None) -> ClickBatch:
         reply: Any = await self._r.xreadgroup(
-            GROUP,
-            self._consumer,
-            {STREAM: start},
-            count=max_items,
-            block=None if self._drain_own_pending else wait_ms,
+            GROUP, self._consumer, {STREAM: start}, count=count, block=block
         )
         entries = cast("list[tuple[str, dict[str, str]]]", reply[0][1]) if reply else []
-        if self._drain_own_pending and not entries:
-            self._drain_own_pending = False
         return ClickBatch(
             codes=[fields["code"] for _, fields in entries],
             receipts=[entry_id for entry_id, _ in entries],

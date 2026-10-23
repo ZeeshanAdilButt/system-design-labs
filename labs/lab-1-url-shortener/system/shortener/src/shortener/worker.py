@@ -14,7 +14,7 @@ import signal
 from collections import Counter
 
 from .config import Settings
-from .ports import ClickQueue, LinkStore
+from .ports import ClickBatch, ClickQueue, LinkStore
 from .wiring import build_queue, build_store, redis_client
 
 log = logging.getLogger("shortener.worker")
@@ -24,19 +24,29 @@ WAIT_MS = 1000
 RETRY_SECONDS = 1.0
 
 
-async def count_once(store: LinkStore, queue: ClickQueue) -> int:
-    """Read one batch, add it to the counts, acknowledge it. Returns how many events it handled.
+class ClickCounter:
+    """Reads click events and adds them up in the store, one batch at a time.
 
-    The acknowledgement comes after the write. If the store fails, nothing is acknowledged
-    and the same events are read again later: a click can be counted twice if the worker dies
+    The acknowledgement comes after the write. If the store fails, the batch is kept and
+    tried again before anything new is read: a click can be counted twice if the worker dies
     between the write and the acknowledgement, but it is never lost.
     """
-    batch = await queue.consume(BATCH, WAIT_MS)
-    if not batch.codes:
-        return 0
-    await store.add_clicks(dict(Counter(batch.codes)))
-    await queue.ack(batch.receipts)
-    return len(batch.codes)
+
+    def __init__(self, store: LinkStore, queue: ClickQueue) -> None:
+        self._store = store
+        self._queue = queue
+        self._failed: ClickBatch | None = None
+
+    async def step(self) -> int:
+        """Handle one batch. Returns how many events it handled."""
+        batch = self._failed or await self._queue.consume(BATCH, WAIT_MS)
+        if not batch.codes:
+            return 0
+        self._failed = batch
+        await self._store.add_clicks(dict(Counter(batch.codes)))
+        await self._queue.ack(batch.receipts)
+        self._failed = None
+        return len(batch.codes)
 
 
 async def run(settings: Settings, stop: asyncio.Event) -> None:
@@ -48,9 +58,10 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
     if hasattr(queue, "setup"):
         await queue.setup()
     log.info("worker %s counting clicks", settings.replica)
+    counter = ClickCounter(store, queue)
     while not stop.is_set():
         try:
-            await count_once(store, queue)
+            await counter.step()
         except Exception as exc:
             log.warning("could not count clicks (%s); trying again", exc)
             with contextlib.suppress(TimeoutError):
