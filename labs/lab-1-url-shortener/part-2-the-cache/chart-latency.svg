@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 320" width="680" height="320" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+<title>Redirect time, one request at a time</title>
+<text x="64" y="24" font-size="15" font-weight="600" fill="#888780">Redirect time, one request at a time</text>
+<text x="14" y="166.0" font-size="12" fill="#888780" text-anchor="middle" transform="rotate(-90 14 166.0)">milliseconds</text>
+<line x1="64" x2="660" y1="268.0" y2="268.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="272.0" font-size="11" fill="#888780" text-anchor="end">0 ms</text>
+<line x1="64" x2="660" y1="217.0" y2="217.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="221.0" font-size="11" fill="#888780" text-anchor="end">1.5 ms</text>
+<line x1="64" x2="660" y1="166.0" y2="166.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="170.0" font-size="11" fill="#888780" text-anchor="end">3 ms</text>
+<line x1="64" x2="660" y1="115.0" y2="115.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="119.0" font-size="11" fill="#888780" text-anchor="end">4.5 ms</text>
+<line x1="64" x2="660" y1="64.0" y2="64.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="68.0" font-size="11" fill="#888780" text-anchor="end">6 ms</text>
+<rect x="64" y="34" width="10" height="10" rx="2" fill="#2a78d6"/>
+<text x="78" y="43" font-size="12" fill="#888780">p50 (typical)</text>
+<rect x="189" y="34" width="10" height="10" rx="2" fill="#e8743b"/>
+<text x="203" y="43" font-size="12" fill="#888780">p99 (1 in 100 slower)</text>
+<rect x="159.0" y="155.8" width="51.0" height="112.2" rx="3" fill="#2a78d6"><title>cache empty: 3.3 ms</title></rect>
+<text x="184.5" y="150.8" font-size="11" fill="#888780" text-anchor="middle">3.3 ms</text>
+<rect x="213.0" y="74.2" width="51.0" height="193.8" rx="3" fill="#e8743b"><title>cache empty: 5.7 ms</title></rect>
+<text x="238.5" y="69.2" font-size="11" fill="#888780" text-anchor="middle">5.7 ms</text>
+<text x="213.0" y="286" font-size="11.5" fill="#888780" text-anchor="middle">cache empty</text>
+<rect x="457.0" y="196.6" width="51.0" height="71.4" rx="3" fill="#2a78d6"><title>cache warm: 2.1 ms</title></rect>
+<text x="482.5" y="191.6" font-size="11" fill="#888780" text-anchor="middle">2.1 ms</text>
+<rect x="511.0" y="118.4" width="51.0" height="149.6" rx="3" fill="#e8743b"><title>cache warm: 4.4 ms</title></rect>
+<text x="536.5" y="113.4" font-size="11" fill="#888780" text-anchor="middle">4.4 ms</text>
+<text x="511.0" y="286" font-size="11.5" fill="#888780" text-anchor="middle">cache warm</text>
+</svg>
