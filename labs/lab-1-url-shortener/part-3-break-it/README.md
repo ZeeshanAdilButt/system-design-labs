@@ -47,7 +47,7 @@ that the real system behaves this way, and measures the price.
 | Step | What happens | Code |
 |---|---|---|
 | 1 | Make 40 links, and one more that is never cached | [`run`](break_it.py#L229) |
-| 2 | Keep a steady stream going: 8 workers each pick a random link, ask for it through the gateway and record the status, time and `X-Cache` | [`out.from_cache`](break_it.py#L215) |
+| 2 | Keep a steady stream going: 8 workers each pick a random link, ask for it through the gateway and record the status, time and `X-Cache` | [`Traffic`](break_it.py#L50) |
 | 3 | Let it run for 2 seconds so the numbers are steady, then break one thing with `docker compose stop` | [`scenario`](break_it.py#L167) |
 | 4 | Keep sending for 8 seconds. While the worker is stopped, also read the click backlog twice a second. While Postgres is stopped, also try an uncached link and a new link every half second | [`scenario`](break_it.py#L167), [`database_probe`](break_it.py#L314) |
 | 5 | Start it again and poll `/api/health` until it says everything is fine six times in a row | [`seconds_until_healthy`](break_it.py#L119) |

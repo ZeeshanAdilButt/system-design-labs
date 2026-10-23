@@ -12,6 +12,7 @@ writes results.md next to its script instead; verify leaves those alone.)
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 import time
@@ -62,11 +63,17 @@ def parts() -> list[tuple[str, Path]]:
     return found
 
 
-def run(name: str, command: list[str], cwd: Path = ROOT) -> Gate:
+def run(name: str, command: list[str], cwd: Path = ROOT, env: dict[str, str] | None = None) -> Gate:
     print(f"==> {name}", flush=True)
     started = time.monotonic()
     done = subprocess.run(
-        command, cwd=cwd, capture_output=True, text=True, encoding="utf-8", check=False
+        command,
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+        env={**os.environ, **(env or {})},
     )
     output = (done.stdout + done.stderr).strip()
     last = output.splitlines()[-1] if output else ""
@@ -105,14 +112,12 @@ def main() -> int:
         command = [*uv, "python", str(script)]
         if args.quick:
             command.append("--quick")
-        gate = run(f"part {name}", command)
-        # The part saved results.md next to its script. Keep verify's copy in .cache/reports/.
-        results = script.parent / "results.md"
-        if results.exists():
-            (REPORTS / f"{name}.md").write_text(
-                results.read_text(encoding="utf-8"), encoding="utf-8"
-            )
-        report.gates.append(gate)
+        # Each part saves its tables to results.md next to its script. Point it at
+        # .cache/reports/ instead, so a quick run never overwrites the committed full results.
+        out_dir = REPORTS / name
+        out_dir.mkdir(parents=True, exist_ok=True)
+        env = {"SDL_RESULTS_DIR": str(out_dir)}
+        report.gates.append(run(f"part {name}", command, env=env))
 
     text = report.markdown()
     (REPORTS / "verify.md").write_text(text + "\n", encoding="utf-8")

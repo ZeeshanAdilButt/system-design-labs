@@ -44,13 +44,13 @@ Our service uses the roll, and fixes its two problems:
 
 | Step | What happens | Code |
 |---|---|---|
-| 1 | Make random 4, 5 and 6 character codes until one repeats. Do it many times and take the median | [`first_collision`](the_codes.py#L31) |
-| 2 | Work out when the first repeat should happen with the birthday formula, to check the measurement | [`theory_first_collision`](the_codes.py#L42) |
-| 3 | Create 10,000 up to 1,000,000 links with random 6-character codes and count how often a code was already taken | [`random_collisions`](the_codes.py#L47) |
-| 4 | Do the same with counter numbers put through the service's real shuffle, and count repeats | [`counter_collisions`](the_codes.py#L61) → [`encode`](../system/shortener/src/shortener/codes.py#L65) |
-| 5 | Show the first five codes, and that each decodes back to its number | [`run`](the_codes.py#L86) → [`decode`](../system/shortener/src/shortener/codes.py#L72) |
-| 6 | Create 100,000 links two ways: one id per trip to the counter, and a block of 1,000 per trip | [`round_trips`](the_codes.py#L67) → [`BlockAllocator`](../system/shortener/src/shortener/ids.py#L9) |
-| 7 | Work out how long 6 characters last at 10, 100 and 1,000 new links a second | [`run`](the_codes.py#L86) |
+| 1 | Make random 4, 5 and 6 character codes until one repeats. Do it many times and take the median | [`first_collision`](the_codes.py#L32) |
+| 2 | Work out when the first repeat should happen with the birthday formula, to check the measurement | [`theory_first_collision`](the_codes.py#L43) |
+| 3 | Create 10,000 up to 1,000,000 links with random 6-character codes and count how often a code was already taken | [`random_collisions`](the_codes.py#L48) |
+| 4 | Do the same with counter numbers put through the service's real shuffle, and count repeats | [`counter_collisions`](the_codes.py#L62) → [`encode`](../system/shortener/src/shortener/codes.py#L65) |
+| 5 | Show the first five codes, and that each decodes back to its number | [`run`](the_codes.py#L87) → [`decode`](../system/shortener/src/shortener/codes.py#L72) |
+| 6 | Create 100,000 links two ways: one id per trip to the counter, and a block of 1,000 per trip | [`round_trips`](the_codes.py#L68) → [`BlockAllocator`](../system/shortener/src/shortener/ids.py#L9) |
+| 7 | Work out how long 6 characters last at 10, 100 and 1,000 new links a second | [`run`](the_codes.py#L87) |
 
 ### How the shuffle works
 
@@ -97,11 +97,11 @@ From the last full run on this laptop ([results.md](results.md)):
 
 | Number | In plain words | Measured by | Code |
 |---|---|---|---|
-| links until first repeat | how many random codes you can make before one repeats | making codes until a repeat, 60 times, taking the median | [`first_collision`](the_codes.py#L31) |
-| the formula says | the birthday formula: about `sqrt(pi x codes / 2)` | math, no measuring | [`theory_first_collision`](the_codes.py#L42) |
-| random codes: retries | times a new code was already taken while creating that many links | counting repeats in a run of random codes | [`random_collisions`](the_codes.py#L47) |
-| counter + shuffle: retries | the same, with the service's real counter and shuffle | making the codes and counting duplicates | [`counter_collisions`](the_codes.py#L61) |
-| trips to the database | how often creating 100,000 links had to ask the shared counter for more ids | counting calls in the real allocator | [`round_trips`](the_codes.py#L67) |
+| links until first repeat | how many random codes you can make before one repeats | making codes until a repeat, 60 times, taking the median | [`first_collision`](the_codes.py#L32) |
+| the formula says | the birthday formula: about `sqrt(pi x codes / 2)` | math, no measuring | [`theory_first_collision`](the_codes.py#L43) |
+| random codes: retries | times a new code was already taken while creating that many links | counting repeats in a run of random codes | [`random_collisions`](the_codes.py#L48) |
+| counter + shuffle: retries | the same, with the service's real counter and shuffle | making the codes and counting duplicates | [`counter_collisions`](the_codes.py#L62) |
+| trips to the database | how often creating 100,000 links had to ask the shared counter for more ids | counting calls in the real allocator | [`round_trips`](the_codes.py#L68) |
 
 ## What it means
 

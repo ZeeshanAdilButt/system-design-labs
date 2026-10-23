@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import math
+import os
 import random
 import statistics
 import sys
@@ -148,8 +149,9 @@ def main() -> None:
     use_utf8_output()
     report = run(args.quick)
     print(report)
-    (HERE / "results.md").write_text(report + "\n", encoding="utf-8")
-    print(f"saved {HERE / 'results.md'}", file=sys.stderr)
+    results_path = Path(os.environ.get("SDL_RESULTS_DIR", HERE)) / "results.md"
+    results_path.write_text(report + "\n", encoding="utf-8")
+    print(f"saved {results_path}", file=sys.stderr)
 
 
 if __name__ == "__main__":
