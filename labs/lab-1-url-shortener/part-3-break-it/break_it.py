@@ -159,6 +159,7 @@ class Outcome:
     clicks_sent: int = 0
     clicks_counted: int = 0
     healthy_after: float = 0.0
+    failures: dict[int, int] = field(default_factory=dict)  # status -> how many
     notes: list[str] = field(default_factory=list)
     series: list[tuple[float, int]] = field(default_factory=list)  # (seconds, click backlog)
 
@@ -208,6 +209,8 @@ async def scenario(
     during = traffic.between(broke, fixed)
     out.sent = len(during)
     out.failed = len(failed(during))
+    for s in failed(during):
+        out.failures[s.status] = out.failures.get(s.status, 0) + 1
     if during:
         out.from_cache = sum(s.cache == "HIT" for s in during) / len(during)
         out.p50 = percentile([s.ms for s in during], 50)
@@ -367,6 +370,21 @@ def report(outcomes: list[Outcome], seconds: float) -> str:
             ]
             lines += [f"| {t:.1f} | {b:,} |" for t, b in o.series[:: max(1, len(o.series) // 12)]]
             break
+    broken = [o for o in outcomes if o.failures]
+    if broken:
+        lines += [
+            "",
+            "## The requests that failed",
+            "",
+            "| what broke | what the failed requests got |",
+            "|---|---|",
+        ]
+        for o in broken:
+            kinds = ", ".join(
+                f"{n} x {'no answer' if status == 0 else status}"
+                for status, n in sorted(o.failures.items())
+            )
+            lines.append(f"| {o.name} | {kinds} |")
     for o in outcomes:
         if o.notes:
             sample = o.notes[:: max(1, len(o.notes) // 4)][:4]
