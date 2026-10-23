@@ -8,7 +8,7 @@ Each chart is read from the tables a part saved, so the picture always matches t
 from __future__ import annotations
 
 import re
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from xml.sax.saxutils import escape
@@ -20,6 +20,9 @@ INK = "#888780"  # readable on both light and dark pages
 BLUE, ORANGE, GREEN = "#2a78d6", "#e8743b", "#2f9e6e"
 W, H = 680, 320
 LEFT, RIGHT, TOP, BOTTOM = 64, 20, 64, 52
+
+
+Formatter = Callable[[float], str]
 
 
 @dataclass(frozen=True)
@@ -49,7 +52,7 @@ def number(text: str) -> float:
 def nice_max(value: float) -> float:
     if value <= 0:
         return 1.0
-    magnitude = 10 ** (len(str(int(value))) - 1)
+    magnitude = float(10 ** (len(str(int(value))) - 1))
     for step in (1, 1.5, 2, 3, 4, 5, 6, 8, 10):
         if value <= step * magnitude:
             return step * magnitude
@@ -64,7 +67,7 @@ def compact(value: float) -> str:
     return f"{value:,.0f}" if value >= 100 or value == int(value) else f"{value:.1f}"
 
 
-def frame(title: str, ylabel: str, top: float, unit: str, fmt=compact) -> list[str]:  # type: ignore[no-untyped-def]
+def frame(title: str, ylabel: str, top: float, unit: str, fmt: Formatter = compact) -> list[str]:
     out = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
         'font-family="system-ui, -apple-system, Segoe UI, sans-serif">',
@@ -96,7 +99,15 @@ def legend(series: Sequence[Series]) -> list[str]:
     return out
 
 
-def bars(title, ylabel, labels, series, unit="", top=None, fmt=compact):  # type: ignore[no-untyped-def]
+def bars(
+    title: str,
+    ylabel: str,
+    labels: Sequence[str],
+    series: Sequence[Series],
+    unit: str = "",
+    top: float | None = None,
+    fmt: Formatter = compact,
+) -> str:
     top = top or nice_max(max(max(s.values) for s in series))
     out = frame(title, ylabel, top, unit, fmt) + legend(series)
     plot_w, plot_h = W - LEFT - RIGHT, H - BOTTOM - TOP
@@ -122,7 +133,16 @@ def bars(title, ylabel, labels, series, unit="", top=None, fmt=compact):  # type
     return "\n".join([*out, "</svg>"])
 
 
-def lines(title, ylabel, xlabel, xs, series, unit="", top=None, fmt=compact):  # type: ignore[no-untyped-def]
+def lines(
+    title: str,
+    ylabel: str,
+    xlabel: str,
+    xs: Sequence[float],
+    series: Sequence[Series],
+    unit: str = "",
+    top: float | None = None,
+    fmt: Formatter = compact,
+) -> str:
     top = top or nice_max(max(max(s.values) for s in series))
     out = frame(title, ylabel, top, unit, fmt) + legend(series)
     plot_w, plot_h = W - LEFT - RIGHT, H - BOTTOM - TOP
