@@ -132,6 +132,7 @@ back to the code that made it.
 | Clicks go on a queue, counted after the redirect | The redirect never waits on a database write | A click is counted a moment later, and lost if Redis is down at that moment | [api.py](system/shortener/src/shortener/api.py#L228) |
 | The worker acknowledges after writing | A click is never lost to a worker crash | A click can be counted twice if the worker dies between the write and the acknowledgement | [worker.py](system/shortener/src/shortener/worker.py#L40) |
 | The gateway retries on another replica, but not on a `503` | A dead replica is invisible to users | A `503` from the app means "the database is down", which another replica cannot fix | [proxy_common.conf](system/gateway/proxy_common.conf#L6-L12) |
+| The gateway looks replica addresses up again every 3 s | A replica that is recreated gets a new address. nginx otherwise remembers the old one for ever and the replica never receives traffic again | A recreated replica can take up to about half a minute to rejoin (seen once: nginx kept sending a few requests to the dead address first) | [nginx.conf](system/gateway/nginx.conf#L6-L18) |
 
 ## Poke it
 
