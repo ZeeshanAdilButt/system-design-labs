@@ -111,11 +111,11 @@
         <h2>Break something</h2>
         <p class="muted small">Run one of these in a terminal, from the <code>labs/lab-1-url-shortener</code> folder. The diagram will notice, and links will keep working.</p>
         <div class="cmds">
-          <div class="cmd"><code>docker compose stop api2</code><span>lose a replica</span></div>
+          <div class="cmd"><code>docker compose stop api1 api2</code><span>lose two replicas</span></div>
           <div class="cmd"><code>docker compose stop redis</code><span>lose the cache and the queue</span></div>
           <div class="cmd"><code>docker compose stop worker</code><span>stop counting clicks</span></div>
           <div class="cmd"><code>docker compose stop postgres</code><span>lose the database</span></div>
-          <div class="cmd"><code>docker compose start api2 redis worker postgres</code><span>bring them all back</span></div>
+          <div class="cmd"><code>docker compose start api1 api2 redis worker postgres</code><span>bring them all back</span></div>
         </div>
       </div>
     </section>

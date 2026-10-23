@@ -76,6 +76,7 @@ $("#copy").addEventListener("click", async () => {
 /* ---------- visiting a link ---------- */
 
 const trace = [];
+const TAG_TEXT = { hit: "HIT", miss: "MISS", bypass: "NO CACHE" };
 
 async function visit(code) {
   const started = performance.now();
@@ -110,8 +111,8 @@ function addTrace(entry) {
   box.innerHTML = trace.map((t) => {
     if (t.error && !t.replica) return `<div class="tr"><span class="tag tag-err">ERR</span><span>/${t.code}: ${t.error}</span></div>`;
     const tag = t.error ? `<span class="tag tag-err">${t.status}</span>`
-      : `<span class="tag tag-${t.cache}">${t.cache.toUpperCase()}</span>`;
-    const note = t.error ? t.error : t.cache === "hit" ? "from the cache" : t.cache === "miss" ? "from the database" : "cache unavailable, from the database";
+      : `<span class="tag tag-${t.cache}">${TAG_TEXT[t.cache] || t.cache.toUpperCase()}</span>`;
+    const note = t.error ? t.error : t.cache === "hit" ? "from the cache" : t.cache === "miss" ? "from the database" : "Redis is down, so from the database";
     return `<div class="tr">${tag}<span>/${t.code} by <b>${t.replica}</b>, ${t.ms.toFixed(1)} ms, ${note}</span></div>`;
   }).join("");
   light(trace[0]);
@@ -201,13 +202,21 @@ function escapeHtml(text) {
 
 /* ---------- live status ---------- */
 
+let gatewayError = 0; // the HTTP status when the gateway answered but no replica did
+
 async function pollHealth() {
   try {
     const res = await fetch("/api/health", { headers: { Accept: "application/json" } });
-    const body = await res.json();
-    online = true;
-    health = { store: body.store, cache: body.cache };
-    lastSeen[body.replica] = Date.now();
+    online = true; // something answered, so the gateway is up
+    let body = null;
+    try { body = await res.json(); } catch { /* an error page from the gateway, not JSON */ }
+    if (body && body.replica) {
+      gatewayError = 0;
+      health = { store: body.store, cache: body.cache };
+      lastSeen[body.replica] = Date.now();
+    } else {
+      gatewayError = res.status; // keep what we knew about Redis and Postgres
+    }
   } catch {
     online = false;
     health = { store: null, cache: null };
@@ -251,20 +260,22 @@ function renderStatus() {
   for (const name of REPLICAS) {
     const fresh = lastSeen[name] && now - lastSeen[name] < STALE_MS;
     if (fresh) alive += 1;
-    setNode(name, !online ? "down" : fresh ? "up" : lastSeen[name] ? "down" : "warn");
-    $(`#s-${name}`).textContent = !online ? "unreachable" : fresh ? "up" : lastSeen[name] ? "not answering" : "waiting";
+    const gaveUp = lastSeen[name] || now - STARTED > 8000; // never answered since the page opened
+    setNode(name, !online ? "down" : fresh ? "up" : gaveUp ? "down" : "warn");
+    $(`#s-${name}`).textContent = !online ? "unreachable" : fresh ? "up" : gaveUp ? "not answering" : "waiting";
   }
   setNode("gateway", online ? "up" : "down");
-  setNode("redis", !online ? "down" : health.cache ? "up" : "down");
-  setNode("postgres", !online ? "down" : health.store ? "up" : "down");
+  setNode("redis", !online ? "down" : health.cache === false ? "down" : "up");
+  setNode("postgres", !online ? "down" : health.store === false ? "down" : "up");
   if (!online) setNode("worker", "down");
 
   const pill = $("#pill");
   pill.className = "pill";
   let text;
   if (!online) { pill.classList.add("pill-bad"); text = "gateway unreachable"; }
-  else if (!health.store) { pill.classList.add("pill-bad"); text = "database down: cached links still redirect"; }
-  else if (!health.cache) { pill.classList.add("pill-warn"); text = "cache down: running slower, still working"; }
+  else if (gatewayError) { pill.classList.add("pill-bad"); text = `gateway answered ${gatewayError}: no replica could serve it`; }
+  else if (health.store === false) { pill.classList.add("pill-bad"); text = "database down: cached links still redirect"; }
+  else if (health.cache === false) { pill.classList.add("pill-warn"); text = "Redis down: links still work, served from the database"; }
   else if (now - STARTED < 4000 && alive < REPLICAS.length) { text = "checking the replicas"; }
   else if (alive < REPLICAS.length) { pill.classList.add("pill-warn"); text = `${alive} of ${REPLICAS.length} replicas answering`; }
   else { pill.classList.add("pill-ok"); text = "all systems up"; }
