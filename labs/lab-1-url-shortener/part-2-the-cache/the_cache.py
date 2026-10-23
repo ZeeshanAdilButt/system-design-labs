@@ -81,9 +81,11 @@ async def flush_cache(redis: aioredis.Redis) -> int:
     return removed
 
 
-async def read_all(client: HttpPool, codes: list[str]) -> tuple[list[Sample], float]:
-    """Request every code in the list, 16 at a time. Returns each sample and the total seconds."""
-    gate = asyncio.Semaphore(CONCURRENCY)
+async def read_all(
+    client: HttpPool, codes: list[str], concurrency: int = CONCURRENCY
+) -> tuple[list[Sample], float]:
+    """Request every code in the list, `concurrency` at a time. Returns the samples and seconds."""
+    gate = asyncio.Semaphore(concurrency)
 
     async def one(code: str) -> Sample:
         async with gate:
@@ -134,6 +136,7 @@ def by_cache_state(samples: list[Sample], state: str) -> list[float]:
 
 async def run(quick: bool) -> str:
     links = 500 if quick else 2000
+    single = 300 if quick else 800
     zipf_requests = 4000 if quick else 20000
     rng = random.Random(11)
 
@@ -152,34 +155,44 @@ async def run(quick: bool) -> str:
         await wait_for_clicks(client)
         clicks_before = await counted_clicks(client, codes)
 
-        print("pass 1: cold cache ...", file=sys.stderr)
+        print("one at a time: cold, then warm ...", file=sys.stderr)
+        few = codes[:single]
+        await flush_cache(redis)
+        cold1, cold1_s = await read_all(client, few, 1)
+        warm1, warm1_s = await read_all(client, few, 1)
+
+        print("16 at a time: cold, then warm ...", file=sys.stderr)
         await flush_cache(redis)
         cold, cold_s = await read_all(client, codes)
-
-        print("pass 2: warm cache ...", file=sys.stderr)
         warm, warm_s = await read_all(client, codes)
 
-        print("pass 3: popular links, empty cache ...", file=sys.stderr)
+        print("popular links, empty cache ...", file=sys.stderr)
         await flush_cache(redis)
         picks = zipf_picks(links, zipf_requests, ZIPF_SKEW, rng)
         popular, popular_s = await read_all(client, [codes[k] for k in picks])
 
         print("checking the click counts ...", file=sys.stderr)
         backlog = await wait_for_clicks(client)
-        sent = len(cold) + len(warm) + len(popular)
+        sent = len(cold1) + len(warm1) + len(cold) + len(warm) + len(popular)
         counted = await counted_clicks(client, codes) - clicks_before
 
-    cold_p50 = percentile([s.ms for s in cold], 50)
-    warm_p50 = percentile([s.ms for s in warm], 50)
+    cold_p50 = percentile([s.ms for s in cold1], 50)
+    warm_p50 = percentile([s.ms for s in warm1], 50)
     hit_p50 = percentile(by_cache_state(popular, "HIT"), 50)
     miss_p50 = percentile(by_cache_state(popular, "MISS"), 50)
 
     lines = ["# Part 2 · The cache: results", ""]
+    lines += [f"{links:,} links, redirects sent through the gateway.", ""]
+    lines += ["## Cold cache against warm cache, one request at a time", ""]
     lines += [
-        f"{links:,} links, {CONCURRENCY} requests in flight at a time, through the gateway.",
+        "| pass | requests | served from cache | p50 | p99 | req/s |",
+        "|---|---|---|---|---|---|",
+        summarize("cold: every link read once, cache empty", cold1, cold1_s),
+        summarize("warm: the same links again", warm1, warm1_s),
         "",
     ]
-    lines += ["## Cold cache against warm cache", ""]
+    lines += [f"The cache made the typical redirect {cold_p50 / warm_p50:.1f}x faster.", ""]
+    lines += [f"## Cold cache against warm cache, {CONCURRENCY} requests in flight", ""]
     lines += [
         "| pass | requests | served from cache | p50 | p99 | req/s |",
         "|---|---|---|---|---|---|",
@@ -187,7 +200,6 @@ async def run(quick: bool) -> str:
         summarize("warm: the same links again", warm, warm_s),
         "",
     ]
-    lines += [f"The cache made the typical redirect {cold_p50 / warm_p50:.1f}x faster.", ""]
 
     lines += ["## Popular links, starting from an empty cache", ""]
     lines += [
@@ -197,7 +209,7 @@ async def run(quick: bool) -> str:
         "| requests sent so far | served from cache (this window) |",
         "|---|---|",
     ]
-    for end, ratio in hit_ratio_windows(popular, WINDOW):
+    for end, ratio in hit_ratio_windows(popular, max(WINDOW, zipf_requests // 10)):
         lines.append(f"| {end:,} | {ratio:.0%} |")
     lines += [
         "",
