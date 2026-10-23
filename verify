@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Every gate in one run: lint, strict types, tests, the docker stack and every lab part.
+# tools/verify.py does the work and writes .cache/reports/.
+#
+#   ./verify               everything
+#   ./verify --quick       shorter lab runs
+#   ./verify --no-docker   skip the parts that need docker compose
+set -euo pipefail
+cd "$(dirname "$0")"
+
+uv sync --all-packages --frozen --quiet
+exec uv run --frozen --no-sync python tools/verify.py "$@"

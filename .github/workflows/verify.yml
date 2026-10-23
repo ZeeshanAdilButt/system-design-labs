@@ -1,0 +1,21 @@
+name: verify
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    # Ubuntu only: the lab stacks are Linux containers.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: ./verify --quick
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reports
+          path: .cache/reports/
