@@ -13,7 +13,7 @@ x-api: &api
   image: shortener:lab1
   restart: unless-stopped
   environment: &api-env
-    DATABASE_URL: postgresql://shortener:shortener@postgres:5432/shortener
+    DATABASE_URL: postgresql://shortener:shortener@postgres:5432/shortener?sslmode=disable
     REDIS_URL: redis://redis:6379/0
     PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8080}
   depends_on:
