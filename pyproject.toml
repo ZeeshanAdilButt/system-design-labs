@@ -1,0 +1,66 @@
+[project]
+name = "system-design-labs"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "shortener",
+    "httpx>=0.27",
+    "redis>=5.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "fakeredis>=2.26",
+    "mypy>=1.13",
+    "ruff>=0.8",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["labs/lab-*/system/shortener"]
+
+[tool.uv.sources]
+shortener = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+cache-dir = ".cache/ruff"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "PT", "N", "C4", "PIE", "RET"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["shortener", "ids", "cache_bench", "break_it"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+explicit_package_bases = true
+cache_dir = ".cache/mypy"
+mypy_path = "labs/lab-1-url-shortener/part-1-the-codes,labs/lab-1-url-shortener/part-2-the-cache,labs/lab-1-url-shortener/part-3-break-it"
+
+[[tool.mypy.overrides]]
+module = ["fakeredis.*", "asyncpg.*", "boto3.*", "botocore.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
+asyncio_mode = "auto"
+cache_dir = ".cache/pytest"
+# Each part of a lab is a folder with one script in it, not a package: put the folders on
+# the path so a part's test can import its script.
+pythonpath = [
+    "labs/lab-1-url-shortener/system/shortener/tests",
+    "labs/lab-1-url-shortener/part-1-the-codes",
+    "labs/lab-1-url-shortener/part-2-the-cache",
+    "labs/lab-1-url-shortener/part-3-break-it",
+]
+norecursedirs = [".*", "*.egg", "build", "dist", "venv"]
+markers = [
+    "stack: needs the docker compose stack running (docker compose up -d)",
+]
