@@ -61,12 +61,21 @@ services:
   api1:
     <<: *api
     environment: {<<: *api-env, REPLICA_NAME: api-1}
+    networks:
+      default:
+        ipv4_address: 172.29.0.11
   api2:
     <<: *api
     environment: {<<: *api-env, REPLICA_NAME: api-2}
+    networks:
+      default:
+        ipv4_address: 172.29.0.12
   api3:
     <<: *api
     environment: {<<: *api-env, REPLICA_NAME: api-3}
+    networks:
+      default:
+        ipv4_address: 172.29.0.13
 
   worker:
     image: shortener:lab1
@@ -78,6 +87,17 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
       redis: {condition: service_healthy}
+
+  # Runs once at the first start: a few named links and some clicks, so the page is not empty.
+  # Run it again any time with: docker compose run --rm seed
+  seed:
+    image: shortener:lab1
+    restart: "no"
+    command: ["shortener-seed"]
+    environment:
+      SEED_URL: http://gateway:80
+    depends_on:
+      gateway: {condition: service_started}
 
   gateway:
     image: nginx:1.27-alpine
@@ -95,3 +115,12 @@ services:
 
 volumes:
   pgdata:
+
+# Fixed addresses for the three replicas. nginx looks a name up once, when it starts, and keeps
+# that address. If a replica came back with a new address nginx would send it nothing, ever.
+# Pinning each replica to one address makes "stop it, start it again" safe.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.29.0.0/24
