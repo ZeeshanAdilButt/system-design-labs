@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 320" width="680" height="320" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+<title>How many links until the first repeated code?</title>
+<text x="64" y="24" font-size="15" font-weight="600" fill="#888780">How many links until the first repeated code?</text>
+<text x="14" y="166.0" font-size="12" fill="#888780" text-anchor="middle" transform="rotate(-90 14 166.0)">links created</text>
+<line x1="64" x2="660" y1="268.0" y2="268.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="272.0" font-size="11" fill="#888780" text-anchor="end">0</text>
+<line x1="64" x2="660" y1="217.0" y2="217.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="221.0" font-size="11" fill="#888780" text-anchor="end">75k</text>
+<line x1="64" x2="660" y1="166.0" y2="166.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="170.0" font-size="11" fill="#888780" text-anchor="end">150k</text>
+<line x1="64" x2="660" y1="115.0" y2="115.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="119.0" font-size="11" fill="#888780" text-anchor="end">225k</text>
+<line x1="64" x2="660" y1="64.0" y2="64.0" stroke="#88878055" stroke-width="1"/>
+<text x="56" y="68.0" font-size="11" fill="#888780" text-anchor="end">300k</text>
+<rect x="64" y="34" width="10" height="10" rx="2" fill="#2a78d6"/>
+<text x="78" y="43" font-size="12" fill="#888780">random codes (measured)</text>
+<rect x="259" y="34" width="10" height="10" rx="2" fill="#e8743b"/>
+<text x="273" y="43" font-size="12" fill="#888780">birthday formula</text>
+<rect x="109.3" y="264.9" width="51.0" height="3.1" rx="3" fill="#2a78d6"><title>4 characters: 4,624</title></rect>
+<text x="134.8" y="259.9" font-size="11" fill="#888780" text-anchor="middle">4,624</text>
+<rect x="163.3" y="264.7" width="51.0" height="3.3" rx="3" fill="#e8743b"><title>4 characters: 4,818</title></rect>
+<text x="188.8" y="259.7" font-size="11" fill="#888780" text-anchor="middle">4,818</text>
+<text x="163.3" y="286" font-size="11.5" fill="#888780" text-anchor="middle">4 characters</text>
+<rect x="308.0" y="242.7" width="51.0" height="25.3" rx="3" fill="#2a78d6"><title>5 characters: 37.2k</title></rect>
+<text x="333.5" y="237.7" font-size="11" fill="#888780" text-anchor="middle">37.2k</text>
+<rect x="362.0" y="242.2" width="51.0" height="25.8" rx="3" fill="#e8743b"><title>5 characters: 37.9k</title></rect>
+<text x="387.5" y="237.2" font-size="11" fill="#888780" text-anchor="middle">37.9k</text>
+<text x="362.0" y="286" font-size="11.5" fill="#888780" text-anchor="middle">5 characters</text>
+<rect x="506.7" y="81.1" width="51.0" height="186.9" rx="3" fill="#2a78d6"><title>6 characters: 274.8k</title></rect>
+<text x="532.2" y="76.1" font-size="11" fill="#888780" text-anchor="middle">274.8k</text>
+<rect x="560.7" y="64.9" width="51.0" height="203.1" rx="3" fill="#e8743b"><title>6 characters: 298.7k</title></rect>
+<text x="586.2" y="59.9" font-size="11" fill="#888780" text-anchor="middle">298.7k</text>
+<text x="560.7" y="286" font-size="11.5" fill="#888780" text-anchor="middle">6 characters</text>
+</svg>
