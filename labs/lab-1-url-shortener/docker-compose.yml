@@ -1,0 +1,97 @@
+# Lab 1: the URL shortener as a small system.
+#
+#   docker compose up --build           start everything, then open http://localhost:8080
+#   docker compose --profile aws up     the same system on LocalStack (DynamoDB + SQS)
+#
+# browser -> gateway (nginx) -> api1, api2, api3 -> redis (cache) / postgres (links)
+#                                       |
+#                                       +-> redis stream -> worker -> postgres (click counts)
+
+x-api: &api
+  build:
+    context: ./system
+  image: shortener:lab1
+  restart: unless-stopped
+  environment: &api-env
+    DATABASE_URL: postgresql://shortener:shortener@postgres:5432/shortener
+    REDIS_URL: redis://redis:6379/0
+    PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8080}
+  depends_on:
+    postgres: {condition: service_healthy}
+    redis: {condition: service_healthy}
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/api/health', timeout=2)"]
+    interval: 3s
+    timeout: 3s
+    retries: 10
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shortener
+      POSTGRES_PASSWORD: shortener
+      POSTGRES_DB: shortener
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./system/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "127.0.0.1:${PG_PORT:-5451}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shortener"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Only keys that expire (the cached links) may be evicted when memory fills up. The click
+    # stream and the counters never expire, so they are never thrown away to make room.
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "volatile-lru"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6391}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  api1:
+    <<: *api
+    environment: {<<: *api-env, REPLICA_NAME: api-1}
+  api2:
+    <<: *api
+    environment: {<<: *api-env, REPLICA_NAME: api-2}
+  api3:
+    <<: *api
+    environment: {<<: *api-env, REPLICA_NAME: api-3}
+
+  worker:
+    image: shortener:lab1
+    restart: unless-stopped
+    command: ["shortener-worker"]
+    environment:
+      <<: *api-env
+      REPLICA_NAME: worker-1
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+
+  gateway:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${GATEWAY_PORT:-8080}:80"
+    volumes:
+      - ./system/gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./system/gateway/proxy_common.conf:/etc/nginx/proxy_common.conf:ro
+      - ./system/gateway/ui:/usr/share/nginx/html:ro
+    depends_on:
+      api1: {condition: service_healthy}
+      api2: {condition: service_healthy}
+      api3: {condition: service_healthy}
+
+volumes:
+  pgdata:

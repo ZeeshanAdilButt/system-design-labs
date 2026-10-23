@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shorty · Lab 1</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>
+      </span>
+      <div>
+        <h1>Shorty</h1>
+        <p>System design lab 1 &middot; a URL shortener you can poke</p>
+      </div>
+    </div>
+    <div id="pill" class="pill pill-wait"><span class="dot"></span><span id="pill-text">connecting</span></div>
+  </header>
+
+  <main class="grid">
+    <section class="col">
+      <div class="card">
+        <h2>Make a short link</h2>
+        <form id="form" autocomplete="off">
+          <label for="url">Long URL</label>
+          <input id="url" type="url" placeholder="https://example.com/a/very/long/page?with=params" required>
+          <label for="alias">Custom name <span class="muted">(optional)</span></label>
+          <input id="alias" type="text" placeholder="my-link" pattern="[A-Za-z0-9_\-]{3,32}" title="3 to 32 letters, digits, - or _">
+          <div class="row">
+            <button class="primary" type="submit">Shorten</button>
+            <span id="form-error" class="error" role="alert"></span>
+          </div>
+        </form>
+        <div id="result" class="result" hidden>
+          <div class="muted small">Your short link</div>
+          <div class="result-row">
+            <a id="result-link" target="_blank" rel="noopener"></a>
+            <button id="copy" class="ghost" type="button">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Recent links</h2>
+          <span class="muted small">clicks are counted by the worker, a moment after the redirect</span>
+        </div>
+        <div id="links" class="links"></div>
+        <p id="links-empty" class="muted" hidden>No links yet. Make one above.</p>
+      </div>
+    </section>
+
+    <section class="col">
+      <div class="card">
+        <div class="card-head">
+          <h2>Inside the stack</h2>
+          <span class="muted small">lights up as requests flow</span>
+        </div>
+        <svg id="diagram" viewBox="0 0 560 330" role="img" aria-label="Request path through the gateway, three API replicas, Redis, Postgres and the worker">
+          <g class="edges">
+            <path id="e-browser-gateway" d="M92 165 H138"/>
+            <path id="e-gateway-api-1" d="M218 165 C250 165 250 55 290 55"/>
+            <path id="e-gateway-api-2" d="M218 165 H290"/>
+            <path id="e-gateway-api-3" d="M218 165 C250 165 250 275 290 275"/>
+            <path id="e-api-1-redis" d="M370 55 H440"/>
+            <path id="e-api-2-redis" d="M370 165 C405 165 405 55 440 55"/>
+            <path id="e-api-3-redis" d="M370 275 C420 275 410 80 450 80" class="faint"/>
+            <path id="e-api-1-postgres" d="M370 62 C415 62 410 265 440 275" class="faint"/>
+            <path id="e-api-2-postgres" d="M370 175 C405 175 405 275 440 275"/>
+            <path id="e-api-3-postgres" d="M370 275 H440"/>
+            <path id="e-redis-worker" d="M480 80 V140"/>
+            <path id="e-worker-postgres" d="M480 190 V250"/>
+          </g>
+          <g class="nodes">
+            <g id="n-browser" class="node up"><rect x="10" y="140" width="82" height="50" rx="10"/><text x="51" y="170" text-anchor="middle">Browser</text></g>
+            <g id="n-gateway" class="node up"><rect x="138" y="140" width="80" height="50" rx="10"/><text x="178" y="161" text-anchor="middle">Gateway</text><text x="178" y="177" text-anchor="middle" class="sub">nginx</text></g>
+            <g id="n-api-1" class="node"><rect x="290" y="30" width="80" height="50" rx="10"/><text x="330" y="51" text-anchor="middle">api-1</text><text id="s-api-1" x="330" y="67" text-anchor="middle" class="sub">waiting</text></g>
+            <g id="n-api-2" class="node"><rect x="290" y="140" width="80" height="50" rx="10"/><text x="330" y="161" text-anchor="middle">api-2</text><text id="s-api-2" x="330" y="177" text-anchor="middle" class="sub">waiting</text></g>
+            <g id="n-api-3" class="node"><rect x="290" y="250" width="80" height="50" rx="10"/><text x="330" y="271" text-anchor="middle">api-3</text><text id="s-api-3" x="330" y="287" text-anchor="middle" class="sub">waiting</text></g>
+            <g id="n-redis" class="node"><rect x="440" y="30" width="110" height="50" rx="10"/><text x="495" y="51" text-anchor="middle">Redis</text><text x="495" y="67" text-anchor="middle" class="sub">cache + queue</text></g>
+            <g id="n-worker" class="node"><rect x="440" y="140" width="110" height="50" rx="10"/><text x="495" y="161" text-anchor="middle">Worker</text><text id="s-worker" x="495" y="177" text-anchor="middle" class="sub">counts clicks</text></g>
+            <g id="n-postgres" class="node"><rect x="440" y="250" width="110" height="50" rx="10"/><text x="495" y="271" text-anchor="middle">Postgres</text><text x="495" y="287" text-anchor="middle" class="sub">the links</text></g>
+          </g>
+        </svg>
+        <div id="trace" class="trace muted">Click "Visit" on a link to see which replica answers it and whether the cache had it.</div>
+      </div>
+
+      <div class="card">
+        <h2>Send traffic</h2>
+        <p class="muted small">Pick a link, then fire redirects at it and watch the numbers move.</p>
+        <div class="row wrap">
+          <select id="target" aria-label="Link to hit"></select>
+          <button class="ghost" data-burst="1">1 request</button>
+          <button class="ghost" data-burst="50">50</button>
+          <button class="ghost" data-burst="500">500</button>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="stat-n" id="st-redirects">0</div><div class="stat-l">redirects served</div></div>
+          <div class="stat"><div class="stat-n" id="st-ratio">n/a</div><div class="stat-l">cache hit ratio</div></div>
+          <div class="stat"><div class="stat-n" id="st-backlog">0</div><div class="stat-l">clicks waiting to be counted</div></div>
+        </div>
+        <div id="share" class="share"></div>
+        <button id="reset" class="link-btn" type="button">reset counters</button>
+      </div>
+
+      <div class="card">
+        <h2>Break something</h2>
+        <p class="muted small">Run one of these in a terminal, from the <code>labs/lab-1-url-shortener</code> folder. The diagram will notice, and links will keep working.</p>
+        <div class="cmds">
+          <div class="cmd"><code>docker compose stop api2</code><span>lose a replica</span></div>
+          <div class="cmd"><code>docker compose stop redis</code><span>lose the cache and the queue</span></div>
+          <div class="cmd"><code>docker compose stop worker</code><span>stop counting clicks</span></div>
+          <div class="cmd"><code>docker compose stop postgres</code><span>lose the database</span></div>
+          <div class="cmd"><code>docker compose start api2 redis worker postgres</code><span>bring them all back</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
