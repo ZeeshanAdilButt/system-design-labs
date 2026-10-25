@@ -183,4 +183,14 @@ tests did not catch.
 - One Postgres, one Redis, one worker. Part 3 shows each surviving a *restart*. Losing the
   disk, or running more than one of each, is a later lab.
 
+## Your turn
+
+Four tasks for this part in [YOUR-TURN.md](../YOUR-TURN.md):
+[T6](../YOUR-TURN.md#t6-stop-the-worker) (stop the worker and predict the queue),
+[T7](../YOUR-TURN.md#t7-the-clicks-that-vanish) (fix the clicks that vanish),
+[T8](../YOUR-TURN.md#t8-a-circuit-breaker-for-the-database) (build the database circuit breaker
+the limits above ask for) and [T9](../YOUR-TURN.md#t9-a-breaker-that-sends-one-scout) (build the
+breaker that sends one scout to Redis). Try first; the answers are in
+[solutions/](../solutions).
+
 Back to the [lab 1 README](..).

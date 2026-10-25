@@ -121,6 +121,22 @@ back to the code that made it.
 
 ![Clicks counted, by what was stopped](part-3-break-it/chart-clicks.svg)
 
+## Your turn
+
+Everything above is a finished system you run, break and measure. [YOUR-TURN.md](YOUR-TURN.md) is
+the other half: nine tasks (`T1` to `T9`) where you do the work yourself. Guess a number and
+measure it, change one setting and explain what moved, fix a bug that was planted on purpose, and
+build two pieces this system does not have yet (a circuit breaker for the database and a
+half-open breaker for the cache, the two limits part 3 ends on). Each task has a goal, a
+prediction to write down first, directions and a check you run yourself.
+
+- The code exercises live in [your-turn/](your-turn). Their tests start red; a plain
+  `uv run pytest` skips them, so the repository stays green. Run them with
+  `uv run pytest labs/lab-1-url-shortener/your-turn`.
+- **Try first.** The answers are kept apart in [solutions/](solutions), one file per task, so you
+  do not see one by accident. `./verify` checks that every task has a solution and that each
+  solution passes its check.
+
 ## Choices, and what each one trades away
 
 | Choice | Why | What it costs | Code |

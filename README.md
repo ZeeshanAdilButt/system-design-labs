@@ -31,6 +31,9 @@ labs/
     docker-compose.yml       the whole system: gateway, 3 API replicas, Redis, Postgres, worker
     docker-compose.aws.yml   the same system on LocalStack (DynamoDB + SQS)
     visual-lab-contract.*    the components, knobs and checks shared with the visual lab
+    YOUR-TURN.md             nine hands-on tasks (T1 to T9) for you to do yourself
+    your-turn/               the starter code and failing tests for the build and fix tasks
+    solutions/               the answers, kept apart: try the task first
     tools/scenario.py        replay a design from the visual lab on the running stack
     system/                  the code that runs inside the containers (and its tests)
     part-1-the-codes/        README, script, results.md, charts, test
@@ -79,6 +82,16 @@ each one) is in [visual-lab-contract.md](labs/lab-1-url-shortener/visual-lab-con
 the same data as [JSON](labs/lab-1-url-shortener/visual-lab-contract.json). More in
 [the lab README](labs/lab-1-url-shortener#pair-it-with-the-visual-lab).
 
+## Your turn
+
+The labs above are finished systems you run and measure. Each lab also has a task sheet where
+you do the work: guess a number and measure it, change one setting and explain it, fix a bug that
+was planted on purpose, build a piece the system does not have yet. For lab 1 that is
+[YOUR-TURN.md](labs/lab-1-url-shortener/YOUR-TURN.md), nine tasks (`T1` to `T9`) with starter
+code and tests in `your-turn/`. **Try first**: the answers sit apart in
+[solutions/](labs/lab-1-url-shortener/solutions), and `./verify` checks that every one of them
+works.
+
 ## Run it on AWS services (locally)
 
 ```bash
@@ -99,7 +112,7 @@ variables changed. See [the lab README](labs/lab-1-url-shortener#run-it-on-aws-s
 ## Check everything
 
 ```bash
-./verify              # lint, strict types, all tests, the stack, every lab part
+./verify              # lint, strict types, all tests, the stack, every lab part, the solutions
 ./verify --quick      # the same with short runs
 ./verify --no-docker  # skip the parts that need Docker
 ```

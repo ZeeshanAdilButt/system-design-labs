@@ -141,4 +141,11 @@ Popular links, starting from an empty cache:
 - 16 requests in flight is the client's choice. With more, queueing would dominate every
   column and bury the difference.
 
+## Your turn
+
+Two tasks for this part in [YOUR-TURN.md](../YOUR-TURN.md):
+[T4](../YOUR-TURN.md#t4-switch-the-cache-off) (switch the cache off and measure) and
+[T5](../YOUR-TURN.md#t5-the-link-that-exists-but-answers-404) (fix a link that exists but answers
+404). Try first; the answers are in [solutions/](../solutions).
+
 Next: [part 3, break it](../part-3-break-it).

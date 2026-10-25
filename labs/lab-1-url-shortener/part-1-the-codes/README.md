@@ -125,4 +125,11 @@ From the last full run on this laptop ([results.md](results.md)):
   next number ([`_create_generated`](../system/shortener/src/shortener/api.py#L223)), and the
   API tests cover it.
 
+## Your turn
+
+Three tasks for this part in [YOUR-TURN.md](../YOUR-TURN.md): [T1](../YOUR-TURN.md#t1-how-soon-do-random-codes-repeat)
+(guess when random codes repeat), [T2](../YOUR-TURN.md#t2-block-size-one) (take the id blocks
+away) and [T3](../YOUR-TURN.md#t3-a-shuffle-that-is-not-a-shuffle) (fix a broken shuffle). Try
+first; the answers are in [solutions/](../solutions).
+
 Next: [part 2, the cache](../part-2-the-cache).

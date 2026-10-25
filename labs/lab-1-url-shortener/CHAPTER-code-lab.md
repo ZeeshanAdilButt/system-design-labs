@@ -163,6 +163,14 @@ stop it all (add `-v` to forget the data).
 | Database errors come back fast | You made a link while Postgres was down | [part 3](part-3-break-it) |
 | No clicks lost when Redis fails, or when the worker stops | You stopped Redis, then the worker | [part 3](part-3-break-it) |
 
+## Now do it yourself
+
+Watching a system break is a start. [YOUR-TURN.md](YOUR-TURN.md) has nine tasks, `T1` to `T9`,
+where you guess first and then find out: measure how soon random codes repeat, turn the cache off,
+stop the worker, fix a bug that was planted in a click counter, and build a circuit breaker for the
+database. Write your prediction down before you run anything, and try each task before you open
+its answer in [solutions/](solutions).
+
 ## Go further
 
 The three parts each have a script that measures one question and writes a table you can read
