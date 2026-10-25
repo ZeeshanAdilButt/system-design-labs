@@ -74,7 +74,12 @@ def main() -> None:
             names.append((name, clicks))
         elif status != 409:  # 409 means "already seeded"
             sys.exit(f"could not create {name}: {status}")
+    # Links without a name get a random-looking code, so "already there" means "same long URL".
+    _, listing = call(host, port, "GET", "/api/links?limit=100")
+    existing = {link["url"] for link in json.loads(listing)}
     for target in UNNAMED:
+        if target in existing:
+            continue
         status, body = call(host, port, "POST", "/api/links", {"url": target})
         if status == 201:
             made += 1
