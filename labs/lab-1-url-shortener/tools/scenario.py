@@ -269,9 +269,7 @@ async def sh(*args: str) -> None:
 async def apply(scenario: Scenario, pool: HttpPool) -> None:
     """Turn the knobs: new settings for the containers, then stop what the design does not have."""
     print("applying the scenario ...", file=sys.stderr)
-    await asyncio.to_thread(
-        docker, "up", "-d", "--wait-timeout", "120", *SERVICES, env=scenario.env()
-    )
+    await asyncio.to_thread(docker, "up", "-d", *SERVICES, env=scenario.env())
     stopped = scenario.stopped_services()
     if stopped:
         await sh("stop", *stopped)
@@ -731,8 +729,10 @@ def main() -> int:
         for check_id, want, got in wrong:
             print(f"UNEXPECTED {check_id}: expected {want}, got {got}", file=sys.stderr)
         if not wrong:
-            recorded = len(preset["expected"])
-            print(f"\nmatches the {recorded} results the contract recorded for {name}")
+            compared = sum(r.id in preset["expected"] for r in results)
+            print(
+                f"matches the {compared} results the contract recorded for {name}", file=sys.stderr
+            )
         return 1 if wrong else 0
     return 1 if any(r.status == FAIL for r in results) else 0
 
