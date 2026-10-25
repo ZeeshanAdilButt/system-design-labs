@@ -54,7 +54,7 @@ services:
     restart: unless-stopped
     # Only keys that expire (the cached links) may be evicted when memory fills up. The click
     # stream and the counters never expire, so they are never thrown away to make room.
-    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "volatile-lru"]
+    command: ["redis-server", "--maxmemory", "${REDIS_MAXMEMORY:-128mb}", "--maxmemory-policy", "volatile-lru"]
     ports:
       - "127.0.0.1:${REDIS_PORT:-6391}:6379"
     healthcheck:
