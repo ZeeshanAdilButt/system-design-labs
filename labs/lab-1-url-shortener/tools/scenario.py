@@ -731,8 +731,8 @@ def main() -> int:
         for check_id, want, got in wrong:
             print(f"UNEXPECTED {check_id}: expected {want}, got {got}", file=sys.stderr)
         if not wrong:
-            print(f"
-matches the {len(preset['expected'])} results the contract recorded for {name}")
+            recorded = len(preset["expected"])
+            print(f"\nmatches the {recorded} results the contract recorded for {name}")
         return 1 if wrong else 0
     return 1 if any(r.status == FAIL for r in results) else 0
 
