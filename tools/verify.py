@@ -6,7 +6,8 @@
 
 Works the same on Windows, macOS and Linux: nothing here needs more than Python and Docker.
 After the parts it replays the lab's full design through tools/scenario.py and checks the
-result against the contract.
+result against the contract, then checks that every task on a lab's YOUR-TURN.md has a working
+solution (labs/lab-1-url-shortener/tools/check_solutions.py).
 Reports land in .cache/reports/: verify.md, plus one file per lab part. (A part run on its own
 writes results.md next to its script instead; verify leaves those alone.)
 """
@@ -144,6 +145,16 @@ def main() -> int:
         scenario = ROOT / "labs" / "lab-1-url-shortener" / "tools" / "scenario.py"
         replay = [*uv, "python", str(scenario), "run", "full_design", "--expect"]
         report.gates.append(run("scenario full_design", [*replay, "--quick"]))
+
+    # The learner's task sheet: every task has a solution, and each solution passes its check.
+    # The stack tasks (T2, T4, T6) change settings and stop the worker, then put the lab back.
+    solutions = ROOT / "labs" / "lab-1-url-shortener" / "tools" / "check_solutions.py"
+    if args.no_docker:
+        report.gates.append(
+            run("your-turn solutions", [*uv, "python", str(solutions), "--no-docker"])
+        )
+    elif stack_up and report.passed:
+        report.gates.append(run("your-turn solutions", [*uv, "python", str(solutions)]))
 
     text = report.markdown()
     (REPORTS / "verify.md").write_text(text + "\n", encoding="utf-8")
