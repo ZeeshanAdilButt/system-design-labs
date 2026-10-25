@@ -54,7 +54,7 @@ the answer in Redis for an hour and returns it. Redis is *only* a shortcut, neve
 
 Every request is sent by [sdl-load](../../../toolkit/sdl-load) and timed from the outside,
 from just before it is sent to when the answer has fully arrived. The API tells us whether it
-used the cache in an `X-Cache` header ([api.py](../system/shortener/src/shortener/api.py#L196)),
+used the cache in an `X-Cache` header ([api.py](../system/shortener/src/shortener/api.py#L199)),
 so each request is sorted by what actually happened, not by what we expected.
 
 ## The results
@@ -131,7 +131,7 @@ Popular links, starting from an empty cache:
 - **The cache is never the truth.** Part 3 stops Redis entirely and links still work.
 - **Counting is separate from redirecting.** Every one of the 25,600 redirects was counted
   by the worker afterwards, and none of them waited for it
-  ([`_after_redirect`](../system/shortener/src/shortener/api.py#L228)).
+  ([`_after_redirect`](../system/shortener/src/shortener/api.py#L240)).
 
 ### Honest limits
 

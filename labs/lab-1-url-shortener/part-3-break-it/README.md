@@ -164,7 +164,7 @@ tests did not catch.
    address would never get traffic again. I first tried making nginx look names up again,
    which made things *worse* (`no live upstreams`). What worked: a short connect timeout, and
    fixed addresses for the three replicas in
-   [docker-compose.yml](../docker-compose.yml#L119-L126), so a restarted replica is always at
+   [docker-compose.yml](../docker-compose.yml#L124-L131), so a restarted replica is always at
    the address nginx remembers. Now it is a row in the table, so it cannot regress unseen.
 4. **The page called a `502` "gateway unreachable".** The health check on the page treated any
    answer that was not JSON as the whole system being down, so one bad moment painted every

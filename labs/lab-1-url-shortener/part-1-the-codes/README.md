@@ -122,7 +122,7 @@ From the last full run on this laptop ([results.md](results.md)):
   can never equal shorter ones.
 - **Custom names live in the same space.** If someone picks the alias `tUwWP2`, the counter
   would hand out the same code later. The create path notices the taken code and takes the
-  next number ([`_create_generated`](../system/shortener/src/shortener/api.py#L219)), and the
+  next number ([`_create_generated`](../system/shortener/src/shortener/api.py#L223)), and the
   API tests cover it.
 
 Next: [part 2, the cache](../part-2-the-cache).
