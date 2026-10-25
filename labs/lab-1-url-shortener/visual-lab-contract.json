@@ -1,0 +1,1024 @@
+{
+  "contract_version": 1,
+  "lab": "lab-1-url-shortener",
+  "title": "URL shortener",
+  "repo": "https://github.com/ZeeshanAdilButt/system-design-labs",
+  "lab_path": "labs/lab-1-url-shortener",
+  "notes": [
+    "Every number marked measured comes from a part-*/results.md run of the real Docker stack. Targets are design goals chosen for the course; the measured reference shows what the real stack does.",
+    "Latency and throughput were measured on the author's laptop. Treat them as relative: a cache hit is about 2x cheaper than a database read, not exactly 6 ms on every machine.",
+    "Code locations name a file and a symbol, not a line, so they stay valid when the file changes."
+  ],
+  "components": [
+    {
+      "id": "gateway",
+      "kind": "load_balancer",
+      "label": "Gateway (nginx)",
+      "role": "One front door. Serves the page, spreads API calls and short links over the API replicas, retries on another replica when one does not answer.",
+      "code": [
+        {
+          "file": "system/gateway/nginx.conf",
+          "symbol": "upstream api"
+        },
+        {
+          "file": "system/gateway/proxy_common.conf",
+          "symbol": "proxy_next_upstream"
+        }
+      ],
+      "knobs": [
+        {
+          "key": "connect_timeout_ms",
+          "label": "Connect timeout",
+          "type": "number",
+          "unit": "ms",
+          "default": 250,
+          "bridge": "fixed",
+          "code": "system/gateway/proxy_common.conf: proxy_connect_timeout"
+        },
+        {
+          "key": "read_timeout_s",
+          "label": "Read timeout",
+          "type": "number",
+          "unit": "s",
+          "default": 5,
+          "bridge": "fixed",
+          "code": "system/gateway/proxy_common.conf: proxy_read_timeout"
+        },
+        {
+          "key": "retry_tries",
+          "label": "Tries per request",
+          "type": "number",
+          "default": 3,
+          "bridge": "fixed",
+          "code": "system/gateway/proxy_common.conf: proxy_next_upstream_tries"
+        },
+        {
+          "key": "retry_on",
+          "label": "Retries on",
+          "type": "choice",
+          "default": "error timeout http_502",
+          "values": [
+            "error timeout http_502"
+          ],
+          "bridge": "fixed",
+          "note": "A 503 from the app means the database is down; another replica cannot fix that, so it is not retried."
+        },
+        {
+          "key": "max_fails",
+          "label": "Failures before a replica is skipped",
+          "type": "number",
+          "default": 1,
+          "bridge": "fixed",
+          "code": "system/gateway/nginx.conf: server api1:8000 max_fails"
+        },
+        {
+          "key": "fail_timeout_s",
+          "label": "How long a failed replica is skipped",
+          "type": "number",
+          "unit": "s",
+          "default": 10,
+          "bridge": "fixed",
+          "code": "system/gateway/nginx.conf: server api1:8000 fail_timeout"
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "kind": "app_server_pool",
+      "label": "API replicas",
+      "role": "Make links and answer redirects. Identical and stateless: any replica can serve any request, so you can lose one or add another.",
+      "code": [
+        {
+          "file": "system/shortener/src/shortener/api.py",
+          "symbol": "create_app"
+        },
+        {
+          "file": "system/shortener/src/shortener/ids.py",
+          "symbol": "BlockAllocator"
+        }
+      ],
+      "knobs": [
+        {
+          "key": "replicas",
+          "label": "Replica count",
+          "type": "integer",
+          "min": 1,
+          "max": 3,
+          "default": 3,
+          "bridge": "scenario",
+          "scenario_key": "replicas",
+          "how": "starts or stops the api1..api3 containers"
+        },
+        {
+          "key": "click_mode",
+          "label": "How clicks are counted",
+          "type": "choice",
+          "values": [
+            "queue",
+            "inline"
+          ],
+          "default": "queue",
+          "bridge": "scenario",
+          "scenario_key": "queue",
+          "how": "queue=true sets CLICK_MODE=queue, queue=false sets CLICK_MODE=inline",
+          "code": "system/shortener/src/shortener/config.py: click_mode"
+        },
+        {
+          "key": "block_size",
+          "label": "Id block size",
+          "type": "integer",
+          "min": 1,
+          "default": 1000,
+          "bridge": "scenario",
+          "scenario_key": "block_size",
+          "how": "ID_BLOCK_SIZE",
+          "code": "system/shortener/src/shortener/config.py: block_size"
+        },
+        {
+          "key": "db_timeout_s",
+          "label": "Database timeout",
+          "type": "number",
+          "unit": "s",
+          "default": 2,
+          "bridge": "scenario",
+          "scenario_key": "db_timeout_s",
+          "how": "DB_TIMEOUT",
+          "code": "system/shortener/src/shortener/store_postgres.py: connect"
+        },
+        {
+          "key": "redis_timeout_ms",
+          "label": "Redis timeout",
+          "type": "number",
+          "unit": "ms",
+          "default": 250,
+          "bridge": "fixed",
+          "code": "system/shortener/src/shortener/wiring.py: redis_client"
+        },
+        {
+          "key": "pool_size",
+          "label": "Database connections per replica",
+          "type": "range",
+          "default": [
+            5,
+            10
+          ],
+          "bridge": "fixed",
+          "code": "system/shortener/src/shortener/store_postgres.py: connect"
+        }
+      ]
+    },
+    {
+      "id": "cache",
+      "kind": "cache",
+      "label": "Cache (Redis)",
+      "role": "Remember code -> long URL so most redirects never touch the database. Cache-aside: the app looks here first and fills it on a miss.",
+      "code": [
+        {
+          "file": "system/shortener/src/shortener/cache.py",
+          "symbol": "Cache"
+        }
+      ],
+      "knobs": [
+        {
+          "key": "enabled",
+          "label": "Cache on",
+          "type": "boolean",
+          "default": true,
+          "bridge": "scenario",
+          "scenario_key": "cache",
+          "how": "false sets CACHE_TTL=0"
+        },
+        {
+          "key": "ttl_s",
+          "label": "Cache TTL",
+          "type": "integer",
+          "unit": "s",
+          "min": 1,
+          "default": 3600,
+          "bridge": "scenario",
+          "scenario_key": "cache_ttl_s",
+          "how": "CACHE_TTL",
+          "code": "system/shortener/src/shortener/config.py: cache_ttl"
+        },
+        {
+          "key": "max_mb",
+          "label": "Cache size",
+          "type": "integer",
+          "unit": "MB",
+          "min": 1,
+          "max": 1024,
+          "default": 128,
+          "bridge": "scenario",
+          "scenario_key": "cache_max_mb",
+          "how": "REDIS_MAXMEMORY; volatile-lru evicts only keys that expire",
+          "code": "docker-compose.yml: redis command"
+        },
+        {
+          "key": "negative_ttl_s",
+          "label": "TTL for codes that do not exist",
+          "type": "integer",
+          "unit": "s",
+          "default": 30,
+          "bridge": "fixed",
+          "code": "system/shortener/src/shortener/config.py: negative_ttl"
+        },
+        {
+          "key": "breaker_cooldown_s",
+          "label": "Circuit breaker cool-down",
+          "type": "number",
+          "unit": "s",
+          "default": 2,
+          "bridge": "fixed",
+          "code": "system/shortener/src/shortener/cache.py: Cache.__init__ cooldown"
+        }
+      ]
+    },
+    {
+      "id": "queue",
+      "kind": "queue",
+      "label": "Click queue (Redis stream)",
+      "role": "Hold click events until the worker counts them, so the redirect never waits on a database write. At-least-once: acknowledged after the write.",
+      "code": [
+        {
+          "file": "system/shortener/src/shortener/queue_redis.py",
+          "symbol": "RedisQueue"
+        }
+      ],
+      "knobs": [
+        {
+          "key": "enabled",
+          "label": "Queue on",
+          "type": "boolean",
+          "default": true,
+          "bridge": "scenario",
+          "scenario_key": "queue",
+          "how": "false makes the API count each click before it answers"
+        },
+        {
+          "key": "delivery",
+          "label": "Delivery",
+          "type": "choice",
+          "default": "at-least-once",
+          "values": [
+            "at-least-once"
+          ],
+          "bridge": "fixed"
+        }
+      ]
+    },
+    {
+      "id": "worker",
+      "kind": "worker",
+      "label": "Worker",
+      "role": "Turn a stream of click events into a few batched database updates.",
+      "code": [
+        {
+          "file": "system/shortener/src/shortener/worker.py",
+          "symbol": "ClickCounter"
+        }
+      ],
+      "knobs": [
+        {
+          "key": "enabled",
+          "label": "Worker running",
+          "type": "boolean",
+          "default": true,
+          "bridge": "scenario",
+          "scenario_key": "worker",
+          "how": "starts or stops the worker container (counts only when the queue is on)"
+        },
+        {
+          "key": "batch",
+          "label": "Events per database update",
+          "type": "integer",
+          "default": 500,
+          "bridge": "fixed",
+          "code": "system/shortener/src/shortener/worker.py: BATCH"
+        },
+        {
+          "key": "wait_ms",
+          "label": "Longest wait for events",
+          "type": "integer",
+          "unit": "ms",
+          "default": 1000,
+          "bridge": "fixed",
+          "code": "system/shortener/src/shortener/worker.py: WAIT_MS"
+        },
+        {
+          "key": "retry_s",
+          "label": "Pause before retrying a failed batch",
+          "type": "number",
+          "unit": "s",
+          "default": 1,
+          "bridge": "fixed",
+          "code": "system/shortener/src/shortener/worker.py: RETRY_SECONDS"
+        }
+      ]
+    },
+    {
+      "id": "database",
+      "kind": "database",
+      "label": "Database (Postgres)",
+      "role": "The source of truth: every link and its click count. The database is a single instance in this lab.",
+      "code": [
+        {
+          "file": "system/shortener/src/shortener/store_postgres.py",
+          "symbol": "PostgresStore"
+        },
+        {
+          "file": "system/db/init.sql",
+          "symbol": "links"
+        }
+      ],
+      "knobs": [
+        {
+          "key": "instances",
+          "label": "Instances",
+          "type": "integer",
+          "default": 1,
+          "bridge": "fixed",
+          "note": "One Postgres. Replicas of the database are a later lab."
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "id": "client_gateway",
+      "from": "client",
+      "to": "gateway",
+      "label": "HTTP",
+      "carries": "POST /api/links, GET /{code}"
+    },
+    {
+      "id": "gateway_api",
+      "from": "gateway",
+      "to": "api",
+      "label": "round robin, retry on another replica",
+      "on_failure": "the next replica is tried (up to 3 tries); a replica that failed is skipped for 10 s"
+    },
+    {
+      "id": "api_cache",
+      "from": "api",
+      "to": "cache",
+      "label": "get, then set on a miss",
+      "on_failure": "bypass: read the database instead; skip Redis for 2 s (circuit breaker)"
+    },
+    {
+      "id": "api_database_read",
+      "from": "api",
+      "to": "database",
+      "label": "read on a cache miss, create a link",
+      "on_failure": "503 after the database timeout (2 s); cached links still redirect"
+    },
+    {
+      "id": "api_queue",
+      "from": "api",
+      "to": "queue",
+      "label": "publish one click event after the redirect was sent",
+      "on_failure": "the click is dropped (best effort)",
+      "when": "queue=true"
+    },
+    {
+      "id": "api_database_clicks",
+      "from": "api",
+      "to": "database",
+      "label": "count the click before answering",
+      "on_failure": "logged and skipped, but the redirect waits up to the database timeout first",
+      "when": "queue=false"
+    },
+    {
+      "id": "queue_worker",
+      "from": "queue",
+      "to": "worker",
+      "label": "batches of up to 500",
+      "on_failure": "events wait in the queue until the worker is back",
+      "when": "queue=true"
+    },
+    {
+      "id": "worker_database",
+      "from": "worker",
+      "to": "database",
+      "label": "one UPDATE per batch, acknowledge after",
+      "on_failure": "the batch is kept and retried every second; a click may be counted twice, never zero times",
+      "when": "queue=true"
+    }
+  ],
+  "paths": [
+    {
+      "id": "create",
+      "label": "Make a link",
+      "steps": [
+        "gateway",
+        "api",
+        "database",
+        "cache"
+      ],
+      "note": "id from the local block, shuffled into a 6-character code, saved in Postgres, then put in the cache"
+    },
+    {
+      "id": "redirect_hit",
+      "label": "Open a link (cache hit)",
+      "steps": [
+        "gateway",
+        "api",
+        "cache"
+      ],
+      "then": [
+        "queue",
+        "worker",
+        "database"
+      ]
+    },
+    {
+      "id": "redirect_miss",
+      "label": "Open a link (cache miss or no cache)",
+      "steps": [
+        "gateway",
+        "api",
+        "cache",
+        "database"
+      ],
+      "then": [
+        "queue",
+        "worker",
+        "database"
+      ]
+    }
+  ],
+  "scenario": {
+    "description": "A scenario is a JSON object of these keys. Missing keys take the default. The bridge (tools/scenario.py) applies it to the Docker stack.",
+    "keys": {
+      "replicas": {
+        "type": "integer",
+        "min": 1,
+        "max": 3,
+        "default": 3,
+        "component": "api"
+      },
+      "cache": {
+        "type": "boolean",
+        "default": true,
+        "component": "cache"
+      },
+      "cache_ttl_s": {
+        "type": "integer",
+        "min": 1,
+        "default": 3600,
+        "component": "cache"
+      },
+      "cache_max_mb": {
+        "type": "integer",
+        "min": 1,
+        "max": 1024,
+        "default": 128,
+        "component": "cache"
+      },
+      "queue": {
+        "type": "boolean",
+        "default": true,
+        "component": "queue"
+      },
+      "worker": {
+        "type": "boolean",
+        "default": true,
+        "component": "worker"
+      },
+      "block_size": {
+        "type": "integer",
+        "min": 1,
+        "default": 1000,
+        "component": "api"
+      },
+      "db_timeout_s": {
+        "type": "number",
+        "min": 0,
+        "max": 30,
+        "default": 2,
+        "component": "api"
+      }
+    },
+    "example": {
+      "replicas": 2,
+      "cache": false,
+      "worker": false
+    }
+  },
+  "presets": {
+    "single_server": {
+      "label": "Single server: one API replica, no cache, clicks counted inside the redirect",
+      "scenario": {
+        "replicas": 1,
+        "cache": false,
+        "queue": false,
+        "worker": false
+      },
+      "expected": {
+        "create_link": "pass",
+        "redirect_302": "pass",
+        "alias_conflict_409": "pass",
+        "unknown_404": "pass",
+        "unique_codes": "pass",
+        "clicks_counted": "pass",
+        "survives_replica_loss": "fail",
+        "survives_cache_loss": "pass",
+        "survives_db_loss_reads": "fail",
+        "db_down_redirect_p99_ms": "fail",
+        "db_down_fails_fast": "pass",
+        "click_loss_redis_down": "pass",
+        "worker_loss_clicks_caught_up": "skip"
+      }
+    },
+    "add_cache": {
+      "label": "Add a cache: still one replica, clicks still counted inside the redirect",
+      "scenario": {
+        "replicas": 1,
+        "cache": true,
+        "queue": false,
+        "worker": false
+      },
+      "expected": {
+        "create_link": "pass",
+        "redirect_302": "pass",
+        "alias_conflict_409": "pass",
+        "unknown_404": "pass",
+        "unique_codes": "pass",
+        "clicks_counted": "pass",
+        "survives_replica_loss": "fail",
+        "survives_cache_loss": "pass",
+        "survives_db_loss_reads": "pass",
+        "db_down_redirect_p99_ms": "fail",
+        "db_down_fails_fast": "pass",
+        "click_loss_redis_down": "pass",
+        "worker_loss_clicks_caught_up": "skip"
+      }
+    },
+    "add_queue": {
+      "label": "Add a queue and a worker: one replica, cache on, clicks counted later",
+      "scenario": {
+        "replicas": 1,
+        "cache": true,
+        "queue": true,
+        "worker": true
+      },
+      "expected": {
+        "create_link": "pass",
+        "redirect_302": "pass",
+        "alias_conflict_409": "pass",
+        "unknown_404": "pass",
+        "unique_codes": "pass",
+        "clicks_counted": "pass",
+        "survives_replica_loss": "fail",
+        "survives_cache_loss": "pass",
+        "survives_db_loss_reads": "pass",
+        "db_down_redirect_p99_ms": "pass",
+        "db_down_fails_fast": "pass",
+        "click_loss_redis_down": "fail",
+        "worker_loss_clicks_caught_up": "pass"
+      }
+    },
+    "full_design": {
+      "label": "Full design: three replicas, cache, queue and worker (the lab's own design)",
+      "scenario": {
+        "replicas": 3,
+        "cache": true,
+        "queue": true,
+        "worker": true
+      },
+      "expected": {
+        "create_link": "pass",
+        "redirect_302": "pass",
+        "alias_conflict_409": "pass",
+        "unknown_404": "pass",
+        "unique_codes": "pass",
+        "clicks_counted": "pass",
+        "survives_replica_loss": "pass",
+        "survives_cache_loss": "pass",
+        "survives_db_loss_reads": "pass",
+        "db_down_redirect_p99_ms": "pass",
+        "db_down_fails_fast": "pass",
+        "click_loss_redis_down": "fail",
+        "worker_loss_clicks_caught_up": "pass"
+      }
+    }
+  },
+  "checks": [
+    {
+      "id": "create_link",
+      "kind": "functional",
+      "title": "A link can be made",
+      "metric": "POST /api/links answers 201 with a short URL",
+      "op": "==",
+      "target": 1,
+      "unit": "",
+      "needs": [
+        "gateway",
+        "api",
+        "database"
+      ],
+      "proof": {
+        "part": "system tests",
+        "script": "system/shortener/tests/test_api.py",
+        "results": null,
+        "table": "test_a_new_link_gets_a_six_character_code_and_a_short_url"
+      },
+      "fix": "Every design needs at least one API replica and a database.",
+      "deterministic": true,
+      "injection": null
+    },
+    {
+      "id": "redirect_302",
+      "kind": "functional",
+      "title": "A short link redirects",
+      "metric": "GET /{code} answers 302 to the long URL",
+      "op": "==",
+      "target": 1,
+      "unit": "",
+      "needs": [
+        "gateway",
+        "api",
+        "database"
+      ],
+      "proof": {
+        "part": "system tests",
+        "script": "system/shortener/tests/test_api.py",
+        "results": null,
+        "table": "test_redirect_is_a_302_to_the_long_url"
+      },
+      "fix": "Check the gateway and the API replica.",
+      "deterministic": true,
+      "injection": null
+    },
+    {
+      "id": "alias_conflict_409",
+      "kind": "functional",
+      "title": "A taken name is refused",
+      "metric": "the same alias twice: 201 then 409",
+      "op": "==",
+      "target": 1,
+      "unit": "",
+      "needs": [
+        "api",
+        "database"
+      ],
+      "proof": {
+        "part": "system tests",
+        "script": "system/shortener/tests/test_api.py",
+        "results": null,
+        "table": "test_custom_alias_works_and_cannot_be_taken_twice"
+      },
+      "fix": "The database decides: INSERT ... ON CONFLICT DO NOTHING.",
+      "deterministic": true,
+      "injection": null
+    },
+    {
+      "id": "unknown_404",
+      "kind": "functional",
+      "title": "An unknown code is a 404",
+      "metric": "GET of a code that was never made answers 404",
+      "op": "==",
+      "target": 1,
+      "unit": "",
+      "needs": [
+        "api",
+        "database"
+      ],
+      "proof": {
+        "part": "system tests",
+        "script": "system/shortener/tests/test_api.py",
+        "results": null,
+        "table": "test_unknown_codes_are_404_and_remembered_for_a_while"
+      },
+      "fix": "",
+      "deterministic": true,
+      "injection": null
+    },
+    {
+      "id": "unique_codes",
+      "kind": "functional",
+      "title": "No two links share a code",
+      "metric": "200 links made at once: codes that repeated or failed",
+      "op": "==",
+      "target": 0,
+      "unit": "codes",
+      "needs": [
+        "api",
+        "database"
+      ],
+      "proof": {
+        "part": "part-1-the-codes",
+        "script": "part-1-the-codes/the_codes.py",
+        "results": "part-1-the-codes/results.md",
+        "table": "Retries needed while creating links (counter + shuffle: 0 retries up to 1,000,000 links)"
+      },
+      "fix": "Codes come from a counter put through a shuffle, so they cannot collide.",
+      "deterministic": true,
+      "injection": null,
+      "reference": "Random 6-character codes first collide after a median 274,789 links; counter + shuffle: 0 retries in 1,000,000 (part 1)."
+    },
+    {
+      "id": "clicks_counted",
+      "kind": "functional",
+      "title": "Every click is counted",
+      "metric": "clicks counted / redirects sent after a short load",
+      "op": ">=",
+      "target": 100,
+      "unit": "%",
+      "needs": [
+        "api",
+        "queue",
+        "worker",
+        "database"
+      ],
+      "proof": {
+        "part": "part-2-the-cache",
+        "script": "part-2-the-cache/the_cache.py",
+        "results": "part-2-the-cache/results.md",
+        "table": "Were the clicks counted? (25,600 sent, 25,600 counted, 0 waiting)"
+      },
+      "fix": "Clicks go on the queue, so the design needs a running worker (or count them without a queue).",
+      "deterministic": true,
+      "injection": null,
+      "reference": "25,600 redirects, 25,600 clicks counted, 0 left in the queue (part 2)."
+    },
+    {
+      "id": "redirect_p50_ms",
+      "kind": "non_functional",
+      "title": "Typical redirect time (p50)",
+      "metric": "p50 of redirects, 16 in flight, popular links",
+      "op": "<=",
+      "target": 15,
+      "unit": "ms",
+      "needs": [
+        "gateway",
+        "api",
+        "cache",
+        "database"
+      ],
+      "proof": {
+        "part": "part-2-the-cache",
+        "script": "part-2-the-cache/the_cache.py",
+        "results": "part-2-the-cache/results.md",
+        "table": "Popular links: served from cache p50 6.0 ms; read the database p50 15.4 ms"
+      },
+      "fix": "Add a cache so most redirects skip the database.",
+      "deterministic": false,
+      "injection": null,
+      "reference": {
+        "cache_hit_ms": 6.0,
+        "database_read_ms": 15.4,
+        "cache_hit_one_at_a_time_ms": 2.1,
+        "database_one_at_a_time_ms": 3.3
+      }
+    },
+    {
+      "id": "redirect_p99_ms",
+      "kind": "non_functional",
+      "title": "Slowest-1% redirect time (p99)",
+      "metric": "p99 of redirects, 16 in flight, popular links",
+      "op": "<=",
+      "target": 60,
+      "unit": "ms",
+      "needs": [
+        "gateway",
+        "api",
+        "cache",
+        "database"
+      ],
+      "proof": {
+        "part": "part-2-the-cache",
+        "script": "part-2-the-cache/the_cache.py",
+        "results": "part-2-the-cache/results.md",
+        "table": "Popular links: served from cache p99 16.7 ms; read the database p99 68.2 ms"
+      },
+      "fix": "Add a cache, and keep clicks off the redirect path (queue).",
+      "deterministic": false,
+      "injection": null,
+      "reference": {
+        "cache_hit_ms": 16.7,
+        "database_read_ms": 68.2
+      }
+    },
+    {
+      "id": "throughput_rps",
+      "kind": "non_functional",
+      "title": "Redirects per second",
+      "metric": "requests completed per second, 16 in flight",
+      "op": ">=",
+      "target": 800,
+      "unit": "req/s",
+      "needs": [
+        "gateway",
+        "api",
+        "cache",
+        "database"
+      ],
+      "proof": {
+        "part": "part-2-the-cache",
+        "script": "part-2-the-cache/the_cache.py",
+        "results": "part-2-the-cache/results.md",
+        "table": "Cold 1,558 req/s, warm 2,454 req/s at 16 in flight"
+      },
+      "fix": "Add a cache and more replicas.",
+      "deterministic": false,
+      "injection": null,
+      "reference": {
+        "cold_cache_rps": 1558,
+        "warm_cache_rps": 2454
+      }
+    },
+    {
+      "id": "survives_replica_loss",
+      "kind": "non_functional",
+      "title": "Survives losing an API replica",
+      "metric": "share of redirects that failed while one replica was stopped",
+      "op": "<=",
+      "target": 0.1,
+      "unit": "% failed",
+      "needs": [
+        "gateway",
+        "api"
+      ],
+      "proof": {
+        "part": "part-3-break-it",
+        "script": "part-3-break-it/break_it.py",
+        "results": "part-3-break-it/results.md",
+        "table": "one API replica stopped: 0 failed of 4,344; two stopped: 0 failed of 4,330"
+      },
+      "fix": "Run at least two replicas behind the gateway.",
+      "deterministic": true,
+      "injection": "stop api1",
+      "reference": "1 replica stopped: 0 of 4,344 failed, p99 7.5 ms; 2 stopped: 0 of 4,330 failed, p99 19.6 ms (part 3)."
+    },
+    {
+      "id": "survives_cache_loss",
+      "kind": "non_functional",
+      "title": "Survives losing the cache",
+      "metric": "share of redirects that failed while Redis was stopped",
+      "op": "<=",
+      "target": 0.1,
+      "unit": "% failed",
+      "needs": [
+        "gateway",
+        "api",
+        "database"
+      ],
+      "proof": {
+        "part": "part-3-break-it",
+        "script": "part-3-break-it/break_it.py",
+        "results": "part-3-break-it/results.md",
+        "table": "Redis stopped: 0 failed of 3,592, served from cache 15%, p99 252.7 ms"
+      },
+      "fix": "The cache is an optimisation: skip it on any Redis error and read the database.",
+      "deterministic": true,
+      "injection": "stop redis",
+      "reference": "0 of 3,592 failed; p50 3.2 ms, p99 252.7 ms (the 250 ms Redis timeout, then a 2 s breaker) (part 3)."
+    },
+    {
+      "id": "survives_db_loss_reads",
+      "kind": "non_functional",
+      "title": "Cached links survive losing the database",
+      "metric": "share of redirects that failed while Postgres was stopped (hot links)",
+      "op": "<=",
+      "target": 0.1,
+      "unit": "% failed",
+      "needs": [
+        "gateway",
+        "api",
+        "cache"
+      ],
+      "proof": {
+        "part": "part-3-break-it",
+        "script": "part-3-break-it/break_it.py",
+        "results": "part-3-break-it/results.md",
+        "table": "Postgres stopped: 0 failed of 5,152, served from cache 100%, p99 6.2 ms"
+      },
+      "fix": "Add a cache: hot links keep redirecting from memory while the database is down.",
+      "deterministic": true,
+      "injection": "stop postgres",
+      "reference": "0 of 5,152 failed; p50 3.2 ms, p99 6.2 ms (part 3)."
+    },
+    {
+      "id": "db_down_redirect_p99_ms",
+      "kind": "non_functional",
+      "title": "Redirects stay fast with the database down",
+      "metric": "p99 of redirects while Postgres was stopped",
+      "op": "<=",
+      "target": 500,
+      "unit": "ms",
+      "needs": [
+        "gateway",
+        "api",
+        "cache"
+      ],
+      "proof": {
+        "part": "part-3-break-it",
+        "script": "part-3-break-it/break_it.py",
+        "results": "part-3-break-it/results.md",
+        "table": "Postgres stopped: p99 6.2 ms (clicks queued, not written)"
+      },
+      "fix": "Do not make the redirect wait for a database write: queue the click.",
+      "deterministic": true,
+      "injection": "stop postgres",
+      "reference": "6.2 ms with the queue; without it every redirect waits the full database timeout (2 s) for its click write."
+    },
+    {
+      "id": "db_down_fails_fast",
+      "kind": "non_functional",
+      "title": "Database errors come back fast",
+      "metric": "slowest 503 (new link, uncached link) while Postgres was stopped",
+      "op": "<=",
+      "target": 3000,
+      "unit": "ms",
+      "needs": [
+        "api",
+        "database"
+      ],
+      "proof": {
+        "part": "part-3-break-it",
+        "script": "part-3-break-it/break_it.py",
+        "results": "part-3-break-it/results.md",
+        "table": "Things that need the database, while Postgres stopped: 503 in 2005 ms / 2006 ms"
+      },
+      "fix": "Keep the database timeout short (default 2 s) so callers get a clean error instead of hanging.",
+      "deterministic": true,
+      "injection": "stop postgres",
+      "reference": "uncached link: 503 in 2005 ms; create: 503 in 2006 ms (the 2 s database timeout) (part 3)."
+    },
+    {
+      "id": "click_loss_redis_down",
+      "kind": "non_functional",
+      "title": "No clicks lost when Redis fails",
+      "metric": "clicks counted / clicks sent while Redis was stopped",
+      "op": ">=",
+      "target": 99,
+      "unit": "%",
+      "needs": [
+        "api",
+        "queue",
+        "worker",
+        "database"
+      ],
+      "proof": {
+        "part": "part-3-break-it",
+        "script": "part-3-break-it/break_it.py",
+        "results": "part-3-break-it/results.md",
+        "table": "Redis stopped: 7,055 clicks sent, 4,106 counted (58%)"
+      },
+      "fix": "The queue lives in Redis, so a click made while Redis is down is dropped. Count clicks without the queue, or put the events somewhere that survives (a file, SQS).",
+      "deterministic": true,
+      "injection": "stop redis",
+      "reference": "7,055 clicks sent, 4,106 counted: 42% lost (part 3). A known gap of the queue design, written down in the lab README."
+    },
+    {
+      "id": "worker_loss_clicks_caught_up",
+      "kind": "non_functional",
+      "title": "No clicks lost when the worker stops",
+      "metric": "clicks counted / clicks sent after the worker was stopped and started again",
+      "op": ">=",
+      "target": 100,
+      "unit": "%",
+      "needs": [
+        "queue",
+        "worker",
+        "database"
+      ],
+      "proof": {
+        "part": "part-3-break-it",
+        "script": "part-3-break-it/break_it.py",
+        "results": "part-3-break-it/results.md",
+        "table": "worker stopped: 7,377 clicks sent, 7,377 counted; backlog grew to 3,865 then drained to 0"
+      },
+      "fix": "Acknowledge a click only after it was written, so the queue keeps it while the worker is away.",
+      "deterministic": true,
+      "injection": "stop worker",
+      "reference": "7,377 of 7,377 counted; backlog peaked at 3,865 clicks after 8 s and was 0 about 4 s after the restart (part 3)."
+    },
+    {
+      "id": "recovers_within_s",
+      "kind": "non_functional",
+      "title": "Recovers quickly",
+      "metric": "seconds until every health check says ok after the slowest repair",
+      "op": "<=",
+      "target": 10,
+      "unit": "s",
+      "needs": [
+        "gateway",
+        "api",
+        "cache",
+        "database"
+      ],
+      "proof": {
+        "part": "part-3-break-it",
+        "script": "part-3-break-it/break_it.py",
+        "results": "part-3-break-it/results.md",
+        "table": "seconds until all healthy: 1.3 (replica), 2.9 (Redis), 3.9 (Postgres)"
+      },
+      "fix": "Pin replica addresses so the gateway finds a restarted replica, and give pools short timeouts.",
+      "deterministic": false,
+      "injection": "all",
+      "reference": "1.3 s replica, 2.9 s Redis, 3.9 s Postgres (part 3)."
+    }
+  ],
+  "expected_note": "expected holds the result of every deterministic check for each preset, recorded on the real stack. The latency, throughput and recovery checks depend on the machine, so they are not listed; see measured for one real run."
+}
