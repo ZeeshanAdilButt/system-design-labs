@@ -527,6 +527,98 @@
         "db_down_fails_fast": "pass",
         "click_loss_redis_down": "pass",
         "worker_loss_clicks_caught_up": "skip"
+      },
+      "measured": {
+        "run_on": "2026-10-25",
+        "how": "scenario.py run single_server (full run, not --quick)",
+        "machine": "the author's Windows laptop with Docker Desktop and other containers running, so the speed checks are slower than the part results",
+        "results": {
+          "create_link": {
+            "status": "pass",
+            "value": 1,
+            "measured": "POST /api/links answered 201"
+          },
+          "redirect_302": {
+            "status": "pass",
+            "value": 1,
+            "measured": "GET /lutlFH answered 302"
+          },
+          "alias_conflict_409": {
+            "status": "pass",
+            "value": 1,
+            "measured": "first 201, second 409"
+          },
+          "unknown_404": {
+            "status": "pass",
+            "value": 1,
+            "measured": "answered 404"
+          },
+          "unique_codes": {
+            "status": "pass",
+            "value": 0,
+            "measured": "200 of 200 links made, 200 different codes"
+          },
+          "clicks_counted": {
+            "status": "pass",
+            "value": 100.0,
+            "measured": "2,200 of 2,200 clicks counted"
+          },
+          "redirect_p50_ms": {
+            "status": "fail",
+            "value": 63.4,
+            "measured": "63.4 ms (0% from cache)"
+          },
+          "redirect_p99_ms": {
+            "status": "fail",
+            "value": 638.6,
+            "measured": "638.6 ms"
+          },
+          "throughput_rps": {
+            "status": "fail",
+            "value": 164,
+            "measured": "164 req/s"
+          },
+          "survives_replica_loss": {
+            "status": "fail",
+            "value": 84.72,
+            "measured": "1,059 of 1,250 failed (1059 x 502) (it was the only replica)"
+          },
+          "survives_cache_loss": {
+            "status": "pass",
+            "value": 0.0,
+            "measured": "0 of 1,220 failed"
+          },
+          "survives_db_loss_reads": {
+            "status": "fail",
+            "value": 61.25,
+            "measured": "215 of 351 failed (215 x 503)"
+          },
+          "db_down_redirect_p99_ms": {
+            "status": "fail",
+            "value": 2023.9,
+            "measured": "2023.9 ms"
+          },
+          "db_down_fails_fast": {
+            "status": "pass",
+            "value": 2026,
+            "measured": "503 after 2,026 ms"
+          },
+          "click_loss_redis_down": {
+            "status": "pass",
+            "value": 100.0,
+            "measured": "2,668 of 2,668 clicks counted"
+          },
+          "worker_loss_clicks_caught_up": {
+            "status": "skip",
+            "value": null,
+            "measured": "no queue, no worker"
+          },
+          "recovers_within_s": {
+            "status": "pass",
+            "value": 7.5,
+            "measured": "slowest recovery 7.5 s"
+          }
+        }
       }
     },
     "add_cache": {
@@ -551,6 +643,98 @@
         "db_down_fails_fast": "pass",
         "click_loss_redis_down": "pass",
         "worker_loss_clicks_caught_up": "skip"
+      },
+      "measured": {
+        "run_on": "2026-10-25",
+        "how": "scenario.py run add_cache (full run, not --quick)",
+        "machine": "the author's Windows laptop with Docker Desktop and other containers running, so the speed checks are slower than the part results",
+        "results": {
+          "create_link": {
+            "status": "pass",
+            "value": 1,
+            "measured": "POST /api/links answered 201"
+          },
+          "redirect_302": {
+            "status": "pass",
+            "value": 1,
+            "measured": "GET /RDsvEV answered 302"
+          },
+          "alias_conflict_409": {
+            "status": "pass",
+            "value": 1,
+            "measured": "first 201, second 409"
+          },
+          "unknown_404": {
+            "status": "pass",
+            "value": 1,
+            "measured": "answered 404"
+          },
+          "unique_codes": {
+            "status": "pass",
+            "value": 0,
+            "measured": "200 of 200 links made, 200 different codes"
+          },
+          "clicks_counted": {
+            "status": "pass",
+            "value": 100.0,
+            "measured": "2,200 of 2,200 clicks counted"
+          },
+          "redirect_p50_ms": {
+            "status": "fail",
+            "value": 29.1,
+            "measured": "29.1 ms (100% from cache)"
+          },
+          "redirect_p99_ms": {
+            "status": "fail",
+            "value": 89.4,
+            "measured": "89.4 ms"
+          },
+          "throughput_rps": {
+            "status": "fail",
+            "value": 492,
+            "measured": "492 req/s"
+          },
+          "survives_replica_loss": {
+            "status": "fail",
+            "value": 92.92,
+            "measured": "2,351 of 2,530 failed (2351 x 502) (it was the only replica)"
+          },
+          "survives_cache_loss": {
+            "status": "pass",
+            "value": 0.0,
+            "measured": "0 of 1,129 failed"
+          },
+          "survives_db_loss_reads": {
+            "status": "pass",
+            "value": 0.0,
+            "measured": "0 of 439 failed"
+          },
+          "db_down_redirect_p99_ms": {
+            "status": "fail",
+            "value": 2033.2,
+            "measured": "2033.2 ms"
+          },
+          "db_down_fails_fast": {
+            "status": "pass",
+            "value": 2008,
+            "measured": "503 after 2,008 ms"
+          },
+          "click_loss_redis_down": {
+            "status": "pass",
+            "value": 100.0,
+            "measured": "2,981 of 2,981 clicks counted"
+          },
+          "worker_loss_clicks_caught_up": {
+            "status": "skip",
+            "value": null,
+            "measured": "no queue, no worker"
+          },
+          "recovers_within_s": {
+            "status": "pass",
+            "value": 6.5,
+            "measured": "slowest recovery 6.5 s"
+          }
+        }
       }
     },
     "add_queue": {
@@ -575,6 +759,98 @@
         "db_down_fails_fast": "pass",
         "click_loss_redis_down": "fail",
         "worker_loss_clicks_caught_up": "pass"
+      },
+      "measured": {
+        "run_on": "2026-10-25",
+        "how": "scenario.py run add_queue (full run, not --quick)",
+        "machine": "the author's Windows laptop with Docker Desktop and other containers running, so the speed checks are slower than the part results",
+        "results": {
+          "create_link": {
+            "status": "pass",
+            "value": 1,
+            "measured": "POST /api/links answered 201"
+          },
+          "redirect_302": {
+            "status": "pass",
+            "value": 1,
+            "measured": "GET /pvshAo answered 302"
+          },
+          "alias_conflict_409": {
+            "status": "pass",
+            "value": 1,
+            "measured": "first 201, second 409"
+          },
+          "unknown_404": {
+            "status": "pass",
+            "value": 1,
+            "measured": "answered 404"
+          },
+          "unique_codes": {
+            "status": "pass",
+            "value": 0,
+            "measured": "200 of 200 links made, 200 different codes"
+          },
+          "clicks_counted": {
+            "status": "pass",
+            "value": 100.0,
+            "measured": "2,200 of 2,200 clicks counted, 0 waiting in the queue"
+          },
+          "redirect_p50_ms": {
+            "status": "fail",
+            "value": 15.2,
+            "measured": "15.2 ms (100% from cache)"
+          },
+          "redirect_p99_ms": {
+            "status": "fail",
+            "value": 65.8,
+            "measured": "65.8 ms"
+          },
+          "throughput_rps": {
+            "status": "pass",
+            "value": 903,
+            "measured": "903 req/s"
+          },
+          "survives_replica_loss": {
+            "status": "fail",
+            "value": 88.67,
+            "measured": "1,902 of 2,145 failed (1902 x 502) (it was the only replica)"
+          },
+          "survives_cache_loss": {
+            "status": "pass",
+            "value": 0.0,
+            "measured": "0 of 2,234 failed"
+          },
+          "survives_db_loss_reads": {
+            "status": "pass",
+            "value": 0.0,
+            "measured": "0 of 2,784 failed"
+          },
+          "db_down_redirect_p99_ms": {
+            "status": "pass",
+            "value": 28.4,
+            "measured": "28.4 ms"
+          },
+          "db_down_fails_fast": {
+            "status": "pass",
+            "value": 2019,
+            "measured": "503 after 2,019 ms"
+          },
+          "click_loss_redis_down": {
+            "status": "fail",
+            "value": 41.5,
+            "measured": "2,820 of 6,800 clicks counted"
+          },
+          "worker_loss_clicks_caught_up": {
+            "status": "pass",
+            "value": 100.0,
+            "measured": "5,680 of 5,680 clicks counted afterwards"
+          },
+          "recovers_within_s": {
+            "status": "pass",
+            "value": 6.1,
+            "measured": "slowest recovery 6.1 s"
+          }
+        }
       }
     },
     "full_design": {
@@ -599,6 +875,98 @@
         "db_down_fails_fast": "pass",
         "click_loss_redis_down": "fail",
         "worker_loss_clicks_caught_up": "pass"
+      },
+      "measured": {
+        "run_on": "2026-10-25",
+        "how": "scenario.py run full_design (full run, not --quick)",
+        "machine": "the author's Windows laptop with Docker Desktop and other containers running, so the speed checks are slower than the part results",
+        "results": {
+          "create_link": {
+            "status": "pass",
+            "value": 1,
+            "measured": "POST /api/links answered 201"
+          },
+          "redirect_302": {
+            "status": "pass",
+            "value": 1,
+            "measured": "GET /hhFO0C answered 302"
+          },
+          "alias_conflict_409": {
+            "status": "pass",
+            "value": 1,
+            "measured": "first 201, second 409"
+          },
+          "unknown_404": {
+            "status": "pass",
+            "value": 1,
+            "measured": "answered 404"
+          },
+          "unique_codes": {
+            "status": "pass",
+            "value": 0,
+            "measured": "200 of 200 links made, 200 different codes"
+          },
+          "clicks_counted": {
+            "status": "pass",
+            "value": 100.0,
+            "measured": "2,200 of 2,200 clicks counted, 0 waiting in the queue"
+          },
+          "redirect_p50_ms": {
+            "status": "pass",
+            "value": 5.6,
+            "measured": "5.6 ms (100% from cache)"
+          },
+          "redirect_p99_ms": {
+            "status": "pass",
+            "value": 51.8,
+            "measured": "51.8 ms"
+          },
+          "throughput_rps": {
+            "status": "pass",
+            "value": 1901,
+            "measured": "1,901 req/s"
+          },
+          "survives_replica_loss": {
+            "status": "pass",
+            "value": 0.0,
+            "measured": "0 of 2,628 failed"
+          },
+          "survives_cache_loss": {
+            "status": "pass",
+            "value": 0.0,
+            "measured": "0 of 2,496 failed"
+          },
+          "survives_db_loss_reads": {
+            "status": "pass",
+            "value": 0.0,
+            "measured": "0 of 2,944 failed"
+          },
+          "db_down_redirect_p99_ms": {
+            "status": "pass",
+            "value": 19.6,
+            "measured": "19.6 ms"
+          },
+          "db_down_fails_fast": {
+            "status": "pass",
+            "value": 2009,
+            "measured": "503 after 2,009 ms"
+          },
+          "click_loss_redis_down": {
+            "status": "fail",
+            "value": 47.9,
+            "measured": "3,365 of 7,020 clicks counted"
+          },
+          "worker_loss_clicks_caught_up": {
+            "status": "pass",
+            "value": 100.0,
+            "measured": "3,530 of 3,530 clicks counted afterwards"
+          },
+          "recovers_within_s": {
+            "status": "pass",
+            "value": 6.8,
+            "measured": "slowest recovery 6.8 s"
+          }
+        }
       }
     }
   },

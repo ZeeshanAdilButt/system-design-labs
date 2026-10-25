@@ -218,3 +218,12 @@ def test_failures_say_what_the_failed_requests_got() -> None:
     w = Window(sent=1838, failed=3, statuses={502: 1, 0: 2})
     assert failures_text(w) == "3 of 1,838 failed (2 x no answer, 1 x 502)"
     assert failures_text(Window(sent=10)) == "0 of 10 failed"
+
+
+def test_the_recorded_runs_cover_every_check_and_agree_with_expected() -> None:
+    ids = {c["id"] for c in CONTRACT["checks"]}
+    for name, preset in CONTRACT["presets"].items():
+        recorded = preset["measured"]["results"]
+        assert set(recorded) == ids, name
+        for check_id, want in preset["expected"].items():
+            assert recorded[check_id]["status"] == want, (name, check_id)

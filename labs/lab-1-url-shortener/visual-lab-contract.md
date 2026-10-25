@@ -144,7 +144,9 @@ Notes the visual lab should carry over:
   measured runs in part 3 had none.
 - `click_loss_redis_down` **fails on every design with a queue**. That is a known and documented
   gap of this lab (the queue lives in Redis), and it is the point of the check: it shows what the
-  queue costs. A design without a queue passes it and pays for it in redirect speed.
+  queue costs. A design without a queue passes it and pays for it in redirect speed. How much
+  is lost depends on timing: part 3 counted 58 %, and four replays of the queue designs counted
+  between 41 % and 48 %.
 - Latency, throughput and recovery targets depend on the machine. They were set from the runs in
   `results.md`, which were taken on the author's laptop on a quiet day. On a busy machine the same
   stack can be 2 to 3 times slower, so judge those three by comparing designs on the same machine.
