@@ -102,7 +102,7 @@ def check_paperwork(task: str, body: str) -> Outcome | None:
 
 def check_no_em_dashes() -> Outcome | None:
     files = [SHEET, *sorted(SOLUTIONS.glob("*")), *sorted(YOUR_TURN.glob("*.py"))]
-    bad = [f.name for f in files if "—" in f.read_text(encoding="utf-8")]
+    bad = [f.name for f in files if "\u2014" in f.read_text(encoding="utf-8")]
     return Outcome("style", False, f"em dash in {bad}") if bad else None
 
 
