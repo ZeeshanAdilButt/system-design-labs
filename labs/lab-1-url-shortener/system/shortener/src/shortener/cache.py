@@ -33,6 +33,7 @@ class Cache:
         negative_ttl: int,
         cooldown: float = 2.0,
     ) -> None:
+        self.enabled = ttl > 0  # a ttl of 0 switches the cache off
         self._r = client
         self._ttl = ttl
         self._negative_ttl = negative_ttl
@@ -47,7 +48,7 @@ class Cache:
         self._down_until = time.monotonic() + self._cooldown
 
     async def get(self, code: str) -> CacheResult:
-        if not self.available:
+        if not self.enabled or not self.available:
             return CacheResult("bypass")
         try:
             value = await self._r.get(f"url:{code}")
@@ -57,7 +58,7 @@ class Cache:
         return CacheResult("hit", str(value)) if value is not None else CacheResult("miss")
 
     async def set(self, code: str, url: str | None) -> None:
-        if not self.available:
+        if not self.enabled or not self.available:
             return
         try:
             if url is None:
@@ -68,6 +69,8 @@ class Cache:
             self._trip()
 
     async def ping(self) -> bool:
+        if not self.enabled:
+            return True  # switched off on purpose is not the same as broken
         if not self.available:
             return False  # known to be down: answer at once instead of waiting on a timeout
         try:

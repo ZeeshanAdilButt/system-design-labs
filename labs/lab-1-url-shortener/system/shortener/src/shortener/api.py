@@ -192,9 +192,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if cached.state == "miss":
                 await state.cache.set(code, url)
 
+        if url is not None and settings.click_mode == "inline":
+            await _count_inline(state, code)  # no queue: the redirect waits for this write
+
         elapsed_ms = (time.perf_counter() - started) * 1000
         headers = {"X-Served-By": settings.replica, "X-Cache": cached.state.upper()}
-        background.add_task(_after_redirect, state, code, cached.state, url is not None)
+        queued = settings.click_mode == "queue"
+        background.add_task(_after_redirect, state, code, cached.state, url is not None, queued)
 
         if url is None:
             return JSONResponse(
@@ -225,10 +229,20 @@ async def _create_generated(state: Any, url: str) -> str:
     raise RuntimeError("could not find a free code")
 
 
-async def _after_redirect(state: Any, code: str, cache_state: str, found: bool) -> None:
+async def _count_inline(state: Any, code: str) -> None:
+    """The no-queue design: add the click to the store before answering."""
+    try:
+        await state.store.add_clicks({code: 1})
+    except Exception:
+        log.warning("click for %s not counted", code)
+
+
+async def _after_redirect(
+    state: Any, code: str, cache_state: str, found: bool, queued: bool = True
+) -> None:
     """Runs after the response is sent, so counting never makes a redirect slower."""
     await state.stats.record_redirect(cache_state, found)
-    if found:
+    if found and queued:
         try:
             await state.queue.publish(code)
         except Exception:

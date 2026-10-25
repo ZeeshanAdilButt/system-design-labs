@@ -26,7 +26,7 @@ def redis_client(settings: Settings, timeout: float = 0.25) -> aioredis.Redis:
 
 async def build_store(settings: Settings) -> LinkStore:
     if settings.store == "postgres":
-        return await PostgresStore.connect(settings.database_url)
+        return await PostgresStore.connect(settings.database_url, settings.db_timeout)
     if settings.store == "dynamodb":
         from .store_dynamodb import DynamoStore  # needs the "aws" extra
 

@@ -16,6 +16,11 @@ x-api: &api
     DATABASE_URL: postgresql://shortener:shortener@postgres:5432/shortener?sslmode=disable
     REDIS_URL: redis://redis:6379/0
     PUBLIC_URL: ${PUBLIC_URL:-http://localhost:8080}
+    # The knobs a scenario turns (tools/scenario.py). The defaults are the lab's design.
+    CACHE_TTL: ${CACHE_TTL:-3600}          # seconds a cached link lives; 0 switches the cache off
+    CLICK_MODE: ${CLICK_MODE:-queue}       # queue (worker counts later) or inline (counted first)
+    ID_BLOCK_SIZE: ${ID_BLOCK_SIZE:-1000}  # ids reserved per database trip
+    DB_TIMEOUT: ${DB_TIMEOUT:-2}           # seconds to wait for the database
   depends_on:
     postgres: {condition: service_healthy}
     redis: {condition: service_healthy}

@@ -12,8 +12,10 @@ class PostgresStore:
         self._pool = pool
 
     @classmethod
-    async def connect(cls, dsn: str) -> PostgresStore:
-        pool = await asyncpg.create_pool(dsn, min_size=5, max_size=10, command_timeout=2, timeout=2)
+    async def connect(cls, dsn: str, timeout: float = 2.0) -> PostgresStore:
+        pool = await asyncpg.create_pool(
+            dsn, min_size=5, max_size=10, command_timeout=timeout, timeout=timeout
+        )
         return cls(pool)
 
     async def next_block(self) -> int:

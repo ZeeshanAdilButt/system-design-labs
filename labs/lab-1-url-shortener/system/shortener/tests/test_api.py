@@ -130,3 +130,31 @@ def test_stats_still_answer_when_redis_is_down(world: World) -> None:
     res = world.client.get("/api/stats")
     assert res.status_code == 200
     assert res.json()["redirects"] == 0
+
+
+def test_inline_clicks_are_written_before_the_answer_and_never_queued(world_inline: World) -> None:
+    code = shorten(world_inline)["code"]
+    for _ in range(3):
+        world_inline.client.get(f"/{code}", follow_redirects=False)
+    assert world_inline.store.links[code].clicks == 3
+    assert world_inline.queue.events == []
+
+
+def test_a_failed_inline_click_does_not_break_the_redirect(world_inline: World) -> None:
+    code = shorten(world_inline)["code"]
+
+    async def broken(counts: dict[str, int]) -> None:
+        raise ConnectionError("store is down")
+
+    world_inline.store.add_clicks = broken  # type: ignore[method-assign]
+    assert world_inline.client.get(f"/{code}", follow_redirects=False).status_code == 302
+
+
+def test_with_the_cache_off_every_redirect_reads_the_store(world_no_cache: World) -> None:
+    code = shorten(world_no_cache)["code"]
+    before = world_no_cache.store.lookups
+    first = world_no_cache.client.get(f"/{code}", follow_redirects=False)
+    second = world_no_cache.client.get(f"/{code}", follow_redirects=False)
+    assert first.headers["x-cache"] == second.headers["x-cache"] == "BYPASS"
+    assert world_no_cache.store.lookups - before == 2
+    assert world_no_cache.client.get("/api/health").json()["status"] == "ok"

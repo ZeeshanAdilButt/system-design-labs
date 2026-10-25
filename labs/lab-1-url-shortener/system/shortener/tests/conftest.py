@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Iterator
 from datetime import UTC, datetime
+from typing import Any
 
 import fakeredis
 import pytest
@@ -102,8 +103,7 @@ def stored_link(code: str, url: str = "https://example.com") -> Link:
     return Link(code, url, datetime.now(UTC))
 
 
-@pytest.fixture
-def world(monkeypatch: pytest.MonkeyPatch) -> Iterator[World]:
+def build_world(monkeypatch: pytest.MonkeyPatch, **settings_args: Any) -> Iterator[World]:
     store, queue = MemoryStore(), MemoryQueue()
     redis = fakeredis.FakeAsyncRedis(decode_responses=True)
 
@@ -116,6 +116,23 @@ def world(monkeypatch: pytest.MonkeyPatch) -> Iterator[World]:
     monkeypatch.setattr(api_module, "build_store", build_store)
     monkeypatch.setattr(api_module, "build_queue", build_queue)
     monkeypatch.setattr(api_module, "redis_client", lambda settings: redis)
-    settings = Settings(public_url="http://short.test", replica="api-test")
+    settings = Settings(public_url="http://short.test", replica="api-test", **settings_args)
     with TestClient(api_module.create_app(settings)) as client:
         yield World(client, store, queue, redis)
+
+
+@pytest.fixture
+def world(monkeypatch: pytest.MonkeyPatch) -> Iterator[World]:
+    yield from build_world(monkeypatch)
+
+
+@pytest.fixture
+def world_inline(monkeypatch: pytest.MonkeyPatch) -> Iterator[World]:
+    """The no-queue design: clicks are written before the redirect is answered."""
+    yield from build_world(monkeypatch, click_mode="inline")
+
+
+@pytest.fixture
+def world_no_cache(monkeypatch: pytest.MonkeyPatch) -> Iterator[World]:
+    """CACHE_TTL=0: the cache is switched off."""
+    yield from build_world(monkeypatch, cache_ttl=0)
