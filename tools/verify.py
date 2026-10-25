@@ -5,6 +5,8 @@
     ./verify --no-docker  skip the parts that need the docker compose stack
 
 Works the same on Windows, macOS and Linux: nothing here needs more than Python and Docker.
+After the parts it replays the lab's full design through tools/scenario.py and checks the
+result against the contract.
 Reports land in .cache/reports/: verify.md, plus one file per lab part. (A part run on its own
 writes results.md next to its script instead; verify leaves those alone.)
 """
@@ -135,6 +137,13 @@ def main() -> int:
         out_dir.mkdir(parents=True, exist_ok=True)
         env = {"SDL_RESULTS_DIR": str(out_dir)}
         report.gates.append(run(f"part {name}", command, env=env))
+
+    if stack_up and report.passed:
+        # Replay the lab's own design through the bridge and compare it with the results the
+        # contract recorded for it (the deterministic checks only).
+        scenario = ROOT / "labs" / "lab-1-url-shortener" / "tools" / "scenario.py"
+        replay = [*uv, "python", str(scenario), "run", "full_design", "--expect"]
+        report.gates.append(run("scenario full_design", [*replay, "--quick"]))
 
     text = report.markdown()
     (REPORTS / "verify.md").write_text(text + "\n", encoding="utf-8")
