@@ -40,14 +40,14 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "PT", "N", "C4", "PIE", "
 "tools/charts.py" = ["E501"]  # long SVG strings
 
 [tool.ruff.lint.isort]
-known-first-party = ["shortener", "sdl_load", "the_codes", "the_cache", "break_it"]
+known-first-party = ["shortener", "sdl_load", "the_codes", "the_cache", "break_it", "scenario"]
 
 [tool.mypy]
 strict = true
 python_version = "3.12"
 explicit_package_bases = true
 cache_dir = ".cache/mypy"
-mypy_path = "labs/lab-1-url-shortener/part-1-the-codes,labs/lab-1-url-shortener/part-2-the-cache,labs/lab-1-url-shortener/part-3-break-it"
+mypy_path = "labs/lab-1-url-shortener/part-1-the-codes,labs/lab-1-url-shortener/part-2-the-cache,labs/lab-1-url-shortener/part-3-break-it,labs/lab-1-url-shortener/tools"
 
 [[tool.mypy.overrides]]
 module = ["fakeredis.*", "asyncpg.*", "boto3.*", "botocore.*"]
@@ -64,6 +64,7 @@ pythonpath = [
     "labs/lab-1-url-shortener/part-1-the-codes",
     "labs/lab-1-url-shortener/part-2-the-cache",
     "labs/lab-1-url-shortener/part-3-break-it",
+    "labs/lab-1-url-shortener/tools",
 ]
 norecursedirs = [".*", "*.egg", "build", "dist", "venv"]
 markers = [
