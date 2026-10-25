@@ -68,15 +68,15 @@ The two paths through it:
 **Making a link** (`POST /api/links`): take the next number from this replica's block of ids
 ([ids.py](system/shortener/src/shortener/ids.py#L24)) → shuffle it into a 6-character code
 ([codes.py](system/shortener/src/shortener/codes.py#L65)) → save it in Postgres, and refuse if
-the code exists ([api.py](system/shortener/src/shortener/api.py#L219)) → put it in the cache
+the code exists ([api.py](system/shortener/src/shortener/api.py#L223)) → put it in the cache
 ([api.py](system/shortener/src/shortener/api.py#L131)).
 
 **Opening a link** (`GET /Ab3dE9`): ask the cache
 ([api.py](system/shortener/src/shortener/api.py#L177)) → on a miss, ask Postgres and fill the
 cache ([api.py](system/shortener/src/shortener/api.py#L193)) → answer `302 Found` with the long
-URL ([api.py](system/shortener/src/shortener/api.py#L214)) → and only after the answer has
+URL ([api.py](system/shortener/src/shortener/api.py#L218)) → and only after the answer has
 gone out, drop a click event on the queue
-([api.py](system/shortener/src/shortener/api.py#L197)).
+([api.py](system/shortener/src/shortener/api.py#L201)).
 
 ## 101: the words you need
 
@@ -127,14 +127,14 @@ back to the code that made it.
 |---|---|---|---|
 | Counter plus shuffle for codes, not random codes | Never collides, so no retry loop and no "is this taken?" read before every write | A counter has to be shared (see the next row), and codes are hard to guess but not secret | [codes.py](system/shortener/src/shortener/codes.py#L51) |
 | Ids handed out in blocks of 1,000 | One database trip serves 1,000 new links | A crashed replica wastes the rest of its block. Gaps in ids are harmless | [ids.py](system/shortener/src/shortener/ids.py#L9) |
-| `302` not `301` | Every click comes through us, so it can be counted | Browsers cannot cache the redirect | [api.py](system/shortener/src/shortener/api.py#L214) |
-| Cache-aside with a 1 hour expiry | Simple, and the database stays the truth | The first read of each link is slow, and a deleted link would live on for up to an hour (this lab has no delete) | [cache.py](system/shortener/src/shortener/cache.py#L49) |
-| Unknown codes are cached too, for 30 s | Someone scanning random codes cannot hammer the database | A link created right after someone asked for it can 404 for up to 30 s unless it is cached on create, which it is | [cache.py](system/shortener/src/shortener/cache.py#L59) |
-| A circuit breaker around the cache | When Redis is down, skip it for 2 s instead of waiting on a timeout every request | A short blind spot after Redis returns | [cache.py](system/shortener/src/shortener/cache.py#L46) |
-| Clicks go on a queue, counted after the redirect | The redirect never waits on a database write | A click is counted a moment later, and lost if Redis is down at that moment | [api.py](system/shortener/src/shortener/api.py#L228) |
+| `302` not `301` | Every click comes through us, so it can be counted | Browsers cannot cache the redirect | [api.py](system/shortener/src/shortener/api.py#L218) |
+| Cache-aside with a 1 hour expiry | Simple, and the database stays the truth | The first read of each link is slow, and a deleted link would live on for up to an hour (this lab has no delete) | [cache.py](system/shortener/src/shortener/cache.py#L50) |
+| Unknown codes are cached too, for 30 s | Someone scanning random codes cannot hammer the database | A link created right after someone asked for it can 404 for up to 30 s unless it is cached on create, which it is | [cache.py](system/shortener/src/shortener/cache.py#L60) |
+| A circuit breaker around the cache | When Redis is down, skip it for 2 s instead of waiting on a timeout every request | A short blind spot after Redis returns | [cache.py](system/shortener/src/shortener/cache.py#L47) |
+| Clicks go on a queue, counted after the redirect | The redirect never waits on a database write | A click is counted a moment later, and lost if Redis is down at that moment | [api.py](system/shortener/src/shortener/api.py#L240) |
 | The worker acknowledges after writing | A click is never lost to a worker crash | A click can be counted twice if the worker dies between the write and the acknowledgement | [worker.py](system/shortener/src/shortener/worker.py#L40) |
 | The gateway retries on another replica, but not on a `503` | A dead replica is invisible to users | A `503` from the app means "the database is down", which another replica cannot fix | [proxy_common.conf](system/gateway/proxy_common.conf#L6-L12) |
-| Each replica has a fixed address, and a dead one is skipped after a quarter second | nginx looks a name up once and remembers the address, so a replica that came back somewhere new would get no traffic. A stopped container never answers at all, so waiting for it is slow | Fixed addresses are a Docker detail you would not hand-pick on a real platform, where a service registry does this job | [docker-compose.yml](docker-compose.yml#L119-L126), [proxy_common.conf](system/gateway/proxy_common.conf#L9-L12) |
+| Each replica has a fixed address, and a dead one is skipped after a quarter second | nginx looks a name up once and remembers the address, so a replica that came back somewhere new would get no traffic. A stopped container never answers at all, so waiting for it is slow | Fixed addresses are a Docker detail you would not hand-pick on a real platform, where a service registry does this job | [docker-compose.yml](docker-compose.yml#L124-L131), [proxy_common.conf](system/gateway/proxy_common.conf#L9-L12) |
 
 ## Poke it
 
@@ -155,6 +155,58 @@ The page at <http://localhost:8080> is built to be played with:
    docker compose stop postgres    # cached links still redirect, new links cannot be made
    docker compose start api1 api2 redis worker postgres
    ```
+
+## Pair it with the visual lab
+
+The visual lab is a canvas: you drag a gateway, API replicas, a cache, a queue, a worker and a
+database into a design, set their knobs, and run it against checks. This lab is the real system
+behind that canvas. Both use one contract, [visual-lab-contract.md](visual-lab-contract.md) (the
+same data, with stable keys, is in [visual-lab-contract.json](visual-lab-contract.json)): the same
+components, the same knobs and the same 17 checks, each tied to the part that proves it.
+
+A design from the canvas is a small JSON of knobs. Replay it on the real stack with the bridge:
+
+```bash
+# from the repository folder, with the stack running
+uv run labs/lab-1-url-shortener/tools/scenario.py run '{"replicas": 2, "cache": false, "worker": false}'
+uv run labs/lab-1-url-shortener/tools/scenario.py run full_design      # or a preset
+uv run labs/lab-1-url-shortener/tools/scenario.py run my-design.json --quick
+```
+
+The bridge ([scenario.py](tools/scenario.py)) turns each knob on the running containers, sends a
+short load, breaks one thing at a time (a replica, Redis, Postgres, the worker) and prints one
+pass/fail table with the measured number next to each target. A full run takes about two
+minutes, `--quick` about one.
+
+| Knob | Default | What the bridge does | Code |
+|---|---|---|---|
+| `replicas` | 3 | starts or stops `api1` to `api3` | [docker-compose.yml](docker-compose.yml#L66-L83) |
+| `cache` | true | `false` sets `CACHE_TTL=0`: every redirect reads Postgres | [cache.py](system/shortener/src/shortener/cache.py#L36) |
+| `cache_ttl_s` | 3600 | sets `CACHE_TTL` | [docker-compose.yml](docker-compose.yml#L20) |
+| `cache_max_mb` | 128 | sets Redis `maxmemory` | [docker-compose.yml](docker-compose.yml#L57) |
+| `queue` | true | `false` sets `CLICK_MODE=inline`: each redirect writes its click to Postgres before it answers | [api.py](system/shortener/src/shortener/api.py#L195-L196) |
+| `worker` | true | starts or stops the worker (it only counts when `queue` is true) | [docker-compose.yml](docker-compose.yml#L85) |
+| `block_size` | 1000 | sets `ID_BLOCK_SIZE` | [docker-compose.yml](docker-compose.yml#L22) |
+| `db_timeout_s` | 2 | sets `DB_TIMEOUT` | [store_postgres.py](system/shortener/src/shortener/store_postgres.py#L15) |
+
+Four presets are named like the designs a learner builds first:
+
+| Preset | Design |
+|---|---|
+| `single_server` | one replica, no cache, clicks counted inside the redirect |
+| `add_cache` | the same with a cache |
+| `add_queue` | one replica, cache, clicks counted later by a worker |
+| `full_design` | three replicas, cache, queue and worker: this lab's own design |
+
+Try them in that order and watch the table change: the cache fixes the slow redirects, the queue
+fixes the slow redirects *when the database is down*, the replicas fix losing a server, and one
+check keeps failing on purpose (`click_loss_redis_down`), because the queue lives in Redis. That
+last row is the honest cost of this design, and part 3 measures it.
+
+`scenario.py apply <preset>` sets a design up and stops, so you can open
+<http://localhost:8080> and poke that shape by hand. `scenario.py reset` puts the stack back to
+this lab's design. The bridge never changes the code that is running: the knobs above are
+ordinary settings of the same containers.
 
 ## Run it on AWS services (locally)
 

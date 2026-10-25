@@ -30,6 +30,8 @@ labs/
     README.md                start here: the 101, the architecture and all three parts
     docker-compose.yml       the whole system: gateway, 3 API replicas, Redis, Postgres, worker
     docker-compose.aws.yml   the same system on LocalStack (DynamoDB + SQS)
+    visual-lab-contract.*    the components, knobs and checks shared with the visual lab
+    tools/scenario.py        replay a design from the visual lab on the running stack
     system/                  the code that runs inside the containers (and its tests)
     part-1-the-codes/        README, script, results.md, charts, test
     part-2-the-cache/
@@ -58,6 +60,24 @@ uv run labs/lab-1-url-shortener/part-2-the-cache/the_cache.py --quick
 
 Add `--quick` for a shorter run. Each part prints its tables and saves them to `results.md`
 in its folder. Stop everything with `docker compose down` (add `-v` to forget the data).
+
+## Pair it with a visual lab
+
+Every lab here is meant to follow a visual lab: a canvas where you drag components into a
+design, set their knobs and run it against checks. The code lab is the real system behind that
+canvas. A design from the canvas is a small JSON, and you replay it on the real stack:
+
+```bash
+uv run labs/lab-1-url-shortener/tools/scenario.py run '{"replicas": 2, "cache": false, "worker": false}'
+uv run labs/lab-1-url-shortener/tools/scenario.py run full_design      # a preset, no JSON needed
+```
+
+The bridge applies the knobs to the running containers, sends a short load, breaks one thing at
+a time and prints a pass/fail table of the same checks the visual lab shows, with the measured
+number next to each target. The shared contract (components, knobs, checks, which part proves
+each one) is in [visual-lab-contract.md](labs/lab-1-url-shortener/visual-lab-contract.md), with
+the same data as [JSON](labs/lab-1-url-shortener/visual-lab-contract.json). More in
+[the lab README](labs/lab-1-url-shortener#pair-it-with-the-visual-lab).
 
 ## Run it on AWS services (locally)
 
