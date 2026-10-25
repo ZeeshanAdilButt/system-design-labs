@@ -40,14 +40,28 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "PT", "N", "C4", "PIE", "
 "tools/charts.py" = ["E501"]  # long SVG strings
 
 [tool.ruff.lint.isort]
-known-first-party = ["shortener", "sdl_load", "the_codes", "the_cache", "break_it", "scenario"]
+known-first-party = [
+    "shortener",
+    "sdl_load",
+    "the_codes",
+    "the_cache",
+    "break_it",
+    "scenario",
+    "check_solutions",
+    "redirect_timer",
+    "t3_shuffle",
+    "t5_create_path",
+    "t7_click_counter",
+    "t8_db_breaker",
+    "t9_half_open_cache",
+]
 
 [tool.mypy]
 strict = true
 python_version = "3.12"
 explicit_package_bases = true
 cache_dir = ".cache/mypy"
-mypy_path = "labs/lab-1-url-shortener/part-1-the-codes,labs/lab-1-url-shortener/part-2-the-cache,labs/lab-1-url-shortener/part-3-break-it,labs/lab-1-url-shortener/tools"
+mypy_path = "labs/lab-1-url-shortener/part-1-the-codes,labs/lab-1-url-shortener/part-2-the-cache,labs/lab-1-url-shortener/part-3-break-it,labs/lab-1-url-shortener/tools,labs/lab-1-url-shortener/your-turn"
 
 [[tool.mypy.overrides]]
 module = ["fakeredis.*", "asyncpg.*", "boto3.*", "botocore.*"]
@@ -65,8 +79,12 @@ pythonpath = [
     "labs/lab-1-url-shortener/part-2-the-cache",
     "labs/lab-1-url-shortener/part-3-break-it",
     "labs/lab-1-url-shortener/tools",
+    "labs/lab-1-url-shortener/your-turn",
 ]
-norecursedirs = [".*", "*.egg", "build", "dist", "venv"]
+# your-turn/ holds the learner exercises: their tests fail until the learner finishes them, so
+# a plain `pytest` skips the folder. Run it on purpose: pytest labs/lab-1-url-shortener/your-turn
+norecursedirs = [".*", "*.egg", "build", "dist", "venv", "your-turn"]
 markers = [
     "stack: needs the docker compose stack running (docker compose up -d)",
+    "your_turn: a learner exercise (labs/*/your-turn); red until the learner solves it",
 ]
